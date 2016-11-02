@@ -7,7 +7,8 @@ public class VivePawn : NetworkBehaviour
 {
     public ViveBridge ViveBridge;
     private GameObject rayMesh;
-    
+    private MeshRenderer rayMeshRenderer;
+
     private GameObject lastCollided;
     private GameObject prevCollided;
     private GameObject manipulatedObject;
@@ -27,38 +28,38 @@ public class VivePawn : NetworkBehaviour
         ViveBridge.Ungripped += ViveBridge_Ungripped;
     }
 
-
     private void ViveBridge_Ungripped(object sender, ClickedEventArgs e)
     {
-        RpcInfo();   
+        if(!isLocalPlayer)
+            return;
+        Debug.Log("Ungripped");
+        SpawnFactory.Spawn("Prefabs/TestPrefab", Vector3.zero, Quaternion.identity);
+    }
+    
+    private void ViveBridge_PadUnclicked(object sender, ClickedEventArgs e)
+    {
+        RpcChangeMode();
+        RpcChangeRayColor();
     }
 
     [ClientRpc]
-    void RpcInfo()
-    {
-        if (!isLocalPlayer)
-            return;
-
-        GetComponentInChildren<Camera>().enabled = true;
-        Debug.Log("name: " + name);
-        Debug.Log("camera: " + GetComponentInChildren<Camera>().enabled);
-    }
-
-    private void ViveBridge_PadUnclicked(object sender, ClickedEventArgs e)
+    private void RpcChangeMode()
     {
         switch (interactionMode)
         {
             case InteractionMode.None:
                 interactionMode = InteractionMode.Manipulation;
-                RpcSwitchRayColor(Color.green);
                 break;
 
             case InteractionMode.Manipulation:
-                interactionMode = InteractionMode.None;
-                RpcSwitchRayColor(Color.red);
+                interactionMode = InteractionMode.SpawnPrimitives;
+                break;
+
+            case InteractionMode.SpawnPrimitives:
+                interactionMode = InteractionMode.Manipulation;
                 break;
         }
-
+        
         Debug.Log("InteractionMode: " + interactionMode.ToString());
     }
 
@@ -71,7 +72,16 @@ public class VivePawn : NetworkBehaviour
     private void ViveBridge_TriggerUnclicked(object sender, ClickedEventArgs e)
     {
         Debug.Log("TriggerUnclicked");
-        RpcReleaseObject();
+        switch (interactionMode)
+        {
+            case InteractionMode.Manipulation:
+                RpcReleaseObject();
+                break;
+
+            case InteractionMode.SpawnPrimitives:
+                SpawnFactory.Spawn("Prefabs/SphereMarker", transform.position, transform.rotation);
+                break;
+        }
     }
 
     // Update is called once per frame
@@ -83,15 +93,7 @@ public class VivePawn : NetworkBehaviour
         transform.position = ViveBridge.Position;
         transform.rotation = ViveBridge.Rotation;
         rayMesh.transform.rotation = ViveBridge.Rotation;
-        //Debug.Log(string.Format("{0}: {1}", isServer ? "Server":"Client", transform.position));
         CheckHits();
-
-        //if (interactionMode == InteractionMode.Manipulation && manipulatedObject != null)
-        //{
-        //    manipulatedObject.transform.position += ViveBridge.DeltaPosition;
-        //    //RpcUpdateTransform(manipulatedObject, manipulatedObject.transform.position, manipulatedObject.transform.rotation);
-        //}
-
     }
 
     void CheckHits()
@@ -112,22 +114,12 @@ public class VivePawn : NetworkBehaviour
 
     }
 
-    private Vector3 dragOffset;
-
-    GameObject SelectObject()
-    {
-        RaycastHit hitInfo;
-        bool hit = Physics.Raycast(new Ray(ViveBridge.Position, ViveBridge.Forward), out hitInfo);
-
-        return hit ? hitInfo.transform.gameObject : null;
-    }
-
     [ClientRpc]
     void RpcDragObject()
     {
         if (!isLocalPlayer)
             return;
-        Debug.Log(interactionMode);
+        Debug.Log("DragObject - mode:" + interactionMode);
         if (interactionMode != InteractionMode.Manipulation)
             return;
 
@@ -135,7 +127,6 @@ public class VivePawn : NetworkBehaviour
             return;
         manipulatedObject = lastCollided;
 
-        dragOffset = transform.position - manipulatedObject.transform.localPosition;
         manipulatedObject.transform.parent = transform;
 
         Debug.Log("Manipulating:" + lastCollided.name);
@@ -148,34 +139,31 @@ public class VivePawn : NetworkBehaviour
             return;
         if (interactionMode != InteractionMode.Manipulation)
             return;
-        //isDragging = false;
         if (manipulatedObject != null)
         {
             manipulatedObject.transform.parent = null;
             manipulatedObject = null;
         }
-
-        //Debug.Log("isDragging: " + isDragging);
     }
 
     [ClientRpc]
-    void RpcSwitchRayColor(Color color)
+    void RpcChangeRayColor()
     {
-        GetComponentInChildren<MeshRenderer>().material.color = color;
-    }
+        Color newColor = Color.black;
+        switch (interactionMode)
+        {
+            case InteractionMode.None:
+                newColor = Color.red;
+                break;
 
-    public override void OnStartClient()
-    {
-        base.OnStartClient();
-        if (isServer)
-            return;
-        
-        //CmdChangeColour(this.gameObject);
-        return;
-        //var mesh = GetComponentInChildren<MeshRenderer>();
-        //mesh.material.color = Color.yellow;
-        //mesh.enabled = true;
-        //GetComponentInChildren<Camera>().enabled = true;
+            case InteractionMode.Manipulation:
+                newColor = Color.green;
+                break;
+            case InteractionMode.SpawnPrimitives:
+                newColor = Colors.Gold;
+                break;
+        }
+        GetComponentInChildren<MeshRenderer>().material.color = newColor;
     }
 
     public override void OnStartLocalPlayer()
@@ -184,13 +172,18 @@ public class VivePawn : NetworkBehaviour
 
         if (!isLocalPlayer)
             return;
-
         name = "LocalClient";
-        var mesh = GetComponentInChildren<MeshRenderer>();
         Debug.Log("Start: " + name);
-        
-        mesh.material.color = Color.yellow;
-        mesh.enabled = true;
+        var meshRenderer = GetComponentInChildren<MeshRenderer>();
+        meshRenderer.material.color = Color.magenta;
+        meshRenderer.enabled = true;
         GetComponentInChildren<Camera>().enabled = true;
     }
+
+    [ClientRpc]
+    private void RpcLog(string log)
+    {
+        Debug.Log(log);
+    }
+
 }

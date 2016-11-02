@@ -1,27 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Assets.New_Scripts
 {
     public static class SpawnFactory
     {
-        private static GameObject spherePrimitive;
-
-        public static GameObject PrimitiveSphere(float radius)
+        public static GameObject Spawn(string resourceId, Vector3 position, Quaternion rotation)
         {
-            if (spherePrimitive == null)
-            {
-                spherePrimitive = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                spherePrimitive.transform.localScale = new Vector3(radius, radius, radius);
-                spherePrimitive.AddComponent<NetworkIdentity>();
-                spherePrimitive.GetComponent<Renderer>().material.color = Color.green;
-            }
-
-            return spherePrimitive;
+            var prefab = Resources.Load<GameObject>(resourceId);
+            var instance = (GameObject)GameObject.Instantiate(prefab, position, rotation);
+            NetworkServer.Spawn(instance);
+            return prefab;
         }
     }
 }

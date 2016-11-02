@@ -38,8 +38,6 @@ namespace Assets.New_Scripts
             var mesh = player.GetComponentInChildren<MeshRenderer>();
             mesh.material.color = Color.magenta;
             player.name = "Server";
-            mesh.enabled = true;
-            //player.GetComponentInChildren<Camera>().enabled = true;
         }
 
     }

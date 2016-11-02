@@ -12,10 +12,10 @@ Library/
 pc_data/
 ProjectSettings/
 Temp/
-Resources/
 Textures/
 Materials/
 Prefabs/
+Images/
 
 #################
 ## Eclipse

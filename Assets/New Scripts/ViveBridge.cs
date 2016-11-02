@@ -32,7 +32,6 @@ public class ViveBridge : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
-        ClientScene.RegisterPrefab(Resources.Load<GameObject>("Prefabs/SphereTest"));
     }
 
     // Update is called once per frame

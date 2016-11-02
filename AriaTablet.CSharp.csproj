@@ -72,6 +72,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\New Scripts\AriaNetworkManager.cs" />
+    <Compile Include="Assets\New Scripts\Colors.cs" />
     <Compile Include="Assets\New Scripts\DebugGUI.cs" />
     <Compile Include="Assets\New Scripts\InteractionMode.cs" />
     <Compile Include="Assets\New Scripts\SpawnFactory.cs" />
