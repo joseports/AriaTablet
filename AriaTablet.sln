@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2015
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AriaTablet.CSharp.Plugins", "AriaTablet.CSharp.Plugins.csproj", "{C19F97FE-82D1-6E40-7AA2-5DF81529E89A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AriaTablet.CSharp", "AriaTablet.CSharp.csproj", "{BA4AB1FA-BC9A-732C-7E04-946EE96C8C4C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AriaTablet.CSharp.Editor", "AriaTablet.CSharp.Editor.csproj", "{ECD2221C-1A57-A951-CD81-CBD7AF752904}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C19F97FE-82D1-6E40-7AA2-5DF81529E89A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C19F97FE-82D1-6E40-7AA2-5DF81529E89A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C19F97FE-82D1-6E40-7AA2-5DF81529E89A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C19F97FE-82D1-6E40-7AA2-5DF81529E89A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA4AB1FA-BC9A-732C-7E04-946EE96C8C4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA4AB1FA-BC9A-732C-7E04-946EE96C8C4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA4AB1FA-BC9A-732C-7E04-946EE96C8C4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA4AB1FA-BC9A-732C-7E04-946EE96C8C4C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECD2221C-1A57-A951-CD81-CBD7AF752904}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECD2221C-1A57-A951-CD81-CBD7AF752904}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECD2221C-1A57-A951-CD81-CBD7AF752904}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECD2221C-1A57-A951-CD81-CBD7AF752904}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
