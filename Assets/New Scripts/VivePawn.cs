@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Linq;
 using Assets.New_Scripts;
 using UnityEngine.Networking;
 
@@ -101,17 +102,19 @@ public class VivePawn : NetworkBehaviour
         if (!isLocalPlayer)
             return;
         RaycastHit hitInfo;
+        var sphere = transform.Find("raySphere").gameObject;
+
         if (Physics.Raycast(new Ray(ViveBridge.Position, ViveBridge.Forward), out hitInfo))
         {
             prevCollided = lastCollided;
             lastCollided = hitInfo.transform.gameObject;
-
-            //if (interactionMode == InteractionMode.None)
-            //    lastCollided.GetComponent<MeshRenderer>().material.color = Color.blue;
+            sphere.transform.position = hitInfo.point;
+            sphere.GetComponent<MeshRenderer>().enabled = true;
         }
-        //else if (prevCollided != null && interactionMode == InteractionMode.None)
-        //    prevCollided.GetComponent<MeshRenderer>().material.color = Color.white;
-
+        else
+        {
+            sphere.GetComponent<MeshRenderer>().enabled = false;
+        }
     }
 
     [ClientRpc]
@@ -163,7 +166,8 @@ public class VivePawn : NetworkBehaviour
                 newColor = Colors.Gold;
                 break;
         }
-        GetComponentInChildren<MeshRenderer>().material.color = newColor;
+        foreach (var meshRender in GetComponentsInChildren<MeshRenderer>())
+            meshRender.material.color = newColor;
     }
 
     public override void OnStartLocalPlayer()
@@ -174,9 +178,13 @@ public class VivePawn : NetworkBehaviour
             return;
         name = "LocalClient";
         Debug.Log("Start: " + name);
-        var meshRenderer = GetComponentInChildren<MeshRenderer>();
-        meshRenderer.material.color = Color.magenta;
-        meshRenderer.enabled = true;
+        var meshRenderers = GetComponentsInChildren<MeshRenderer>();
+        foreach (var meshRenderer in meshRenderers)
+        {
+            meshRenderer.material.color = Color.magenta;
+            meshRenderer.enabled = true;
+        }
+
         GetComponentInChildren<Camera>().enabled = true;
     }
 
