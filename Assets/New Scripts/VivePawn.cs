@@ -18,7 +18,8 @@ public class VivePawn : NetworkBehaviour
     private InteractionMode interactionMode;
 
     // for scaling JFG
-    Vector3 lastPosition;
+    Vector3 currentPosition;
+    private Vector3 prevPosition;
     private int quadrantWorld;
     private int quadrantObject;
     private float scaleFactor = 1.0f;
@@ -37,7 +38,7 @@ public class VivePawn : NetworkBehaviour
         ViveBridge.PadUnclicked += ViveBridge_PadUnclicked;
         ViveBridge.Ungripped += ViveBridge_Ungripped;
 
-        lastPosition = new Vector3(0, 0, 0);
+        //currentPosition = new Vector3(0, 0, 0);
     }
 
     private void ViveBridge_Ungripped(object sender, ClickedEventArgs e)
@@ -112,6 +113,10 @@ public class VivePawn : NetworkBehaviour
             case InteractionMode.SpawnPrimitives:
                 SpawnFactory.Spawn("Prefabs/SphereMarker", transform.position, transform.rotation);
                 break;
+
+                case InteractionMode.ScalePrefabs:
+                manipulatedObject = null;
+                break;
         }
     }
 
@@ -121,15 +126,19 @@ public class VivePawn : NetworkBehaviour
         if (!isLocalPlayer)
             return;
 
+        prevPosition = transform.position;
+
         transform.position = ViveBridge.Position;
         transform.rotation = ViveBridge.Rotation;
         rayMesh.transform.rotation = ViveBridge.Rotation;
-        lastPosition = transform.position;
-
-
-
+        currentPosition = transform.position;
 
         CheckHits();
+
+        if (IsScaling)
+        {
+            RpcScaleObject();
+        }
 
 
     }
@@ -148,18 +157,14 @@ public class VivePawn : NetworkBehaviour
             sphere.transform.position = hitInfo.point;
             sphere.GetComponent<MeshRenderer>().enabled = true;
 
-            if (IsScaling)
-            {
-                RpcScaleObject();
-            }
-
+            if (IsScaling && manipulatedObject == null)
+                manipulatedObject = lastCollided;
         }
         else
         {
             sphere.GetComponent<MeshRenderer>().enabled = false;
         }
-
-
+        
     }
 
     private float signedAngle(Vector3 viewForward, Vector3 objForward)
@@ -255,29 +260,27 @@ public class VivePawn : NetworkBehaviour
         if (interactionMode != InteractionMode.ScalePrefabs)
             return;
 
-        if (lastCollided == null)
+        //if (lastCollided == null)
+        //    return;
+
+        if (currentPosition == Vector3.zero)
             return;
 
-        if (lastPosition == Vector3.zero)
-            return;
-
-        Debug.Log("lastposition" + lastPosition);
+        Debug.Log("lastposition" + currentPosition);
         Debug.Log("transform" + transform.position);
 
-        var deltaP = transform.position - lastPosition;
-        //lastPosition = transform.position;
+        var deltaP = currentPosition - prevPosition;
+        //currentPosition = transform.position;
         //Debug.Log("deltaP" + deltaP);
         if (deltaP.magnitude >= 10)
         {
-            lastPosition = transform.position;
+            currentPosition = transform.position;
             return;
 
         }
 
         quadrantWorld = QuadrantFromVector(new Vector3(0, 0, 1));
         quadrantObject = QuadrantFromVector(transform.forward.normalized);
-
-        manipulatedObject = lastCollided;
 
         Debug.Log("Quadrantword" + quadrantWorld);
         switch (quadrantWorld)
