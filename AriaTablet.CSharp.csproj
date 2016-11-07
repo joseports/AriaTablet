@@ -78,6 +78,7 @@
     <Compile Include="Assets\New Scripts\SpawnFactory.cs" />
     <Compile Include="Assets\New Scripts\ViveBridge.cs" />
     <Compile Include="Assets\New Scripts\ViveController.cs" />
+    <Compile Include="Assets\New Scripts\ViveManipulator.cs" />
     <Compile Include="Assets\New Scripts\VivePawn.cs" />
     <Compile Include="Assets\Scripts\ControllerPosition.cs" />
     <Compile Include="Assets\Scripts\DebugScreenLog.cs" />
