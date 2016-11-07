@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Assets.New_Scripts
 {
     public class ViveManipulator
     {
-        private GameObject vivePawn;
+        public const float MinimumPrimitiveDistance = 0.5f;
+        private const string rayMesh = "ray";
+        private const string raySphereMesh = "raySphere";
+        private readonly GameObject vivePawn;
         private GameObject lastCollided;
         private GameObject prevCollided;
 
@@ -17,10 +16,15 @@ namespace Assets.New_Scripts
         private int quadrantObject;
         private float scaleFactor = 1.0f;
 
+        private Color originalMaterialColor;
+
         public Vector3 PrevPosition { get; set; }
         public Vector3 CurrentPosition { get; set; }
         public GameObject ManipulatedObject { get; set; }
         public InteractionMode InteractionMode { get; set; }
+
+        public bool IsManipulating { get; private set; }
+        public bool IsScaling { get; private set; }
 
         public ViveManipulator(GameObject vivePawn)
         {
@@ -33,9 +37,7 @@ namespace Assets.New_Scripts
             if (InteractionMode != InteractionMode.Manipulation)
                 return;
 
-            if (lastCollided == null)
-                return;
-            ManipulatedObject = lastCollided;
+            CaptureCollided();
 
             ManipulatedObject.transform.parent = vivePawn.transform;
 
@@ -47,13 +49,18 @@ namespace Assets.New_Scripts
             Debug.Log("Releasing:" + ManipulatedObject.name);
             if (ManipulatedObject != null)
             {
+                RestoreColor(ManipulatedObject);
                 ManipulatedObject.transform.parent = null;
                 ManipulatedObject = null;
+                IsManipulating = IsScaling = false;
             }
         }
 
         public void ChangeMode()
         {
+
+
+            // this actually changes the interactionMode
             switch (InteractionMode)
             {
                 case InteractionMode.None:
@@ -62,19 +69,38 @@ namespace Assets.New_Scripts
 
                 case InteractionMode.Manipulation:
                     InteractionMode = InteractionMode.ScalePrefabs;
-
                     break;
 
-                //case InteractionMode.SpawnPrimitives:
-                //    InteractionMode = InteractionMode.Manipulation;
-                //    break;
-
                 case InteractionMode.ScalePrefabs:
+                    InteractionMode = InteractionMode.SpawnPrimitives;
+                    break;
+
+                case InteractionMode.SpawnPrimitives:
                     InteractionMode = InteractionMode.Manipulation;
                     break;
             }
 
             Debug.Log("InteractionMode: " + InteractionMode);
+        }
+
+        public void ActivateTempPrimitive(float distance)
+        {
+            var sphere = vivePawn.transform.Find(raySphereMesh).gameObject;
+            sphere.transform.localPosition = new Vector3(0, 0, distance);
+            sphere.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
+            var sphereRenderer = sphere.GetComponent<MeshRenderer>();
+            sphereRenderer.enabled = true;
+            var ray = vivePawn.transform.Find(rayMesh).gameObject;
+            ray.GetComponent<MeshRenderer>().enabled = false;
+        }
+
+        public void DeactivateTempPrimitive()
+        {
+            var ray = vivePawn.transform.Find(rayMesh).gameObject;
+            ray.GetComponent<MeshRenderer>().enabled = true;
+            var sphere = vivePawn.transform.Find(raySphereMesh).gameObject;
+            sphere.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
+
         }
 
         public void ChangeColor()
@@ -90,20 +116,20 @@ namespace Assets.New_Scripts
                     newColor = Color.green;
                     break;
                 case InteractionMode.SpawnPrimitives:
-                    newColor = Colors.Gold;
+                    newColor = Colors.TransparentGold;
                     break;
 
                 case InteractionMode.ScalePrefabs:
                     newColor = Color.black;
                     break;
             }
+
             foreach (var meshRender in vivePawn.GetComponentsInChildren<MeshRenderer>())
                 meshRender.material.color = newColor;
         }
 
         public void ScaleObject()
         {
-            
             if (InteractionMode != InteractionMode.ScalePrefabs)
                 return;
 
@@ -240,20 +266,39 @@ namespace Assets.New_Scripts
 
         public void CheckHits(Vector3 controllerPosition, Vector3 controllerForward)
         {
+            if (InteractionMode == InteractionMode.SpawnPrimitives || IsManipulating || IsScaling)
+                return;
+
             RaycastHit hitInfo;
-            var sphere = vivePawn.transform.Find("raySphere").gameObject;
+            var sphere = vivePawn.transform.Find(raySphereMesh).gameObject;
 
             if (Physics.Raycast(new Ray(controllerPosition, controllerForward), out hitInfo))
             {
-                prevCollided = lastCollided;
-                lastCollided = hitInfo.transform.gameObject;
+                if (hitInfo.transform.gameObject != lastCollided)
+                {
+                    if (lastCollided != null)
+                        RestoreColor(lastCollided);
+                    prevCollided = lastCollided;
+                    lastCollided = hitInfo.transform.gameObject;
+
+                    var renderer = lastCollided.GetComponent<MeshRenderer>();
+                    originalMaterialColor = renderer.material.color;
+                    renderer.material.color = Colors.TransparentGreen;
+                }
                 sphere.transform.position = hitInfo.point;
                 sphere.GetComponent<MeshRenderer>().enabled = true;
-
+                
             }
             else
             {
+                if (lastCollided != null)
+                {
+                    prevCollided = lastCollided;
+                    RestoreColor(lastCollided);
+                    lastCollided = null;
+                }
                 sphere.GetComponent<MeshRenderer>().enabled = false;
+                    
             }
         }
 
@@ -261,7 +306,25 @@ namespace Assets.New_Scripts
         {
             Debug.Log("DragObject - mode:" + InteractionMode);
             if (lastCollided != null)
+            {
                 ManipulatedObject = lastCollided;
+
+                switch (InteractionMode)
+                {
+                    case InteractionMode.Manipulation:
+                        IsManipulating = true;
+                        break;
+
+                    case InteractionMode.ScalePrefabs:
+                        IsScaling = true;
+                        break;
+                }
+            }
+        }
+
+        void RestoreColor(GameObject gameObject)
+        {
+            gameObject.GetComponent<MeshRenderer>().material.color = originalMaterialColor;
         }
 
     }

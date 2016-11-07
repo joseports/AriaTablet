@@ -48,7 +48,27 @@ public class VivePawn : NetworkBehaviour
     [ClientRpc]
     private void RpcChangeMode()
     {
+        if (!isLocalPlayer)
+            return;
+
+        // this gets executed *before* leaving the current mode
+        switch (viveManipulator.InteractionMode)
+        {
+            case InteractionMode.SpawnPrimitives:
+                viveManipulator.DeactivateTempPrimitive();
+                break;
+        }
+
+        // this actually changes the mode
         viveManipulator.ChangeMode();
+
+        // this gets execute *after* changing the mode
+        switch (viveManipulator.InteractionMode)
+        {
+            case InteractionMode.SpawnPrimitives:
+                viveManipulator.ActivateTempPrimitive(ViveManipulator.MinimumPrimitiveDistance);
+                break;
+        }
     }
 
     [ClientRpc]
@@ -86,10 +106,16 @@ public class VivePawn : NetworkBehaviour
                 break;
 
             case InteractionMode.SpawnPrimitives:
-                SpawnFactory.Spawn("Prefabs/SphereMarker", transform.position, transform.rotation);
+                SpawnFactory.Spawn("Prefabs/SphereMarker", CalculatePrimitivePosition(0.5f), transform.rotation);
                 break;
 
         }
+    }
+
+    Vector3 CalculatePrimitivePosition(float distance)
+    {
+        Ray r = new Ray(transform.position, transform.forward);
+        return r.GetPoint(distance);
     }
 
 
@@ -109,12 +135,12 @@ public class VivePawn : NetworkBehaviour
 
         CheckHits();
 
-        if (viveManipulator.InteractionMode == InteractionMode.ScalePrefabs)
+        switch (viveManipulator.InteractionMode)
         {
+            case InteractionMode.ScalePrefabs:
             RpcScaleObject();
+                break;
         }
-
-
     }
 
     void CheckHits()
@@ -124,7 +150,6 @@ public class VivePawn : NetworkBehaviour
         
         viveManipulator.CheckHits(ViveBridge.Position, ViveBridge.Forward);
     }
-
 
     [ClientRpc]
     void RpcDragObject()
