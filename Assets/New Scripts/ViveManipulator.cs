@@ -33,7 +33,7 @@ namespace Assets.New_Scripts
 
         public void DragObject()
         {
-            Debug.Log("DragObject - mode:" + InteractionMode);
+            Debug.Log("DragObject: " + InteractionMode);
             if (InteractionMode != InteractionMode.Manipulation)
                 return;
 
@@ -58,8 +58,6 @@ namespace Assets.New_Scripts
 
         public void ChangeMode()
         {
-
-
             // this actually changes the interactionMode
             switch (InteractionMode)
             {
@@ -304,7 +302,7 @@ namespace Assets.New_Scripts
 
         public void CaptureCollided()
         {
-            Debug.Log("DragObject - mode:" + InteractionMode);
+            Debug.Log("Capture - mode:" + InteractionMode);
             if (lastCollided != null)
             {
                 ManipulatedObject = lastCollided;

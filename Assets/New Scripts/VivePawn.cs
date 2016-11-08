@@ -17,6 +17,7 @@ public class VivePawn : NetworkBehaviour
     void Start()
     {
         ViveBridge = GameObject.Find("ViveBridge").GetComponent<ViveBridge>();
+        
         viveManipulator = new ViveManipulator(gameObject);
 
         rayMesh = GetComponentInChildren<MeshRenderer>().transform.parent.gameObject;
@@ -48,17 +49,16 @@ public class VivePawn : NetworkBehaviour
     [ClientRpc]
     private void RpcChangeMode()
     {
-        if (!isLocalPlayer)
-            return;
 
         // this gets executed *before* leaving the current mode
         switch (viveManipulator.InteractionMode)
         {
             case InteractionMode.SpawnPrimitives:
-                viveManipulator.DeactivateTempPrimitive();
+                if (isLocalPlayer)
+                    viveManipulator.DeactivateTempPrimitive();
                 break;
         }
-
+        
         // this actually changes the mode
         viveManipulator.ChangeMode();
 
@@ -66,7 +66,8 @@ public class VivePawn : NetworkBehaviour
         switch (viveManipulator.InteractionMode)
         {
             case InteractionMode.SpawnPrimitives:
-                viveManipulator.ActivateTempPrimitive(ViveManipulator.MinimumPrimitiveDistance);
+                if(isLocalPlayer)
+                    viveManipulator.ActivateTempPrimitive(ViveManipulator.MinimumPrimitiveDistance);
                 break;
         }
     }
@@ -74,6 +75,8 @@ public class VivePawn : NetworkBehaviour
     [ClientRpc]
     private void RpcCapture()
     {
+        if (!isLocalPlayer)
+            return;
         viveManipulator.CaptureCollided();
     }
 
@@ -106,7 +109,8 @@ public class VivePawn : NetworkBehaviour
                 break;
 
             case InteractionMode.SpawnPrimitives:
-                SpawnFactory.Spawn("Prefabs/SphereMarker", CalculatePrimitivePosition(0.5f), transform.rotation);
+                if(isLocalPlayer)
+                    SpawnFactory.Spawn("Prefabs/SphereMarker", CalculatePrimitivePosition(0.5f), transform.rotation);
                 break;
 
         }
@@ -147,7 +151,7 @@ public class VivePawn : NetworkBehaviour
     {
         if (!isLocalPlayer)
             return;
-        
+
         viveManipulator.CheckHits(ViveBridge.Position, ViveBridge.Forward);
     }
 
@@ -156,7 +160,7 @@ public class VivePawn : NetworkBehaviour
     {
         if (!isLocalPlayer)
             return;
-        
+
         viveManipulator.DragObject();
     }
 
