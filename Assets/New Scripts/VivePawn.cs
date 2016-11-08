@@ -131,9 +131,17 @@ public class VivePawn : NetworkBehaviour
 
         viveManipulator.PrevPosition = transform.position;
 
-        transform.position = ViveBridge.Position;
-        transform.rotation = ViveBridge.Rotation;
-        rayMesh.transform.rotation = ViveBridge.Rotation;
+        if (isServer)
+        {
+            transform.position = ViveBridge.Position;
+            transform.rotation = ViveBridge.Rotation;
+        }
+        else
+        {
+            transform.position = Vector3.Lerp(transform.position, ViveBridge.Position, Time.deltaTime*ViveManipulator.SmoothStep);
+            transform.rotation = Quaternion.Lerp(transform.rotation, ViveBridge.Rotation, Time.deltaTime* ViveManipulator.SmoothStep);
+        }
+        rayMesh.transform.rotation = transform.rotation;
 
         viveManipulator.CurrentPosition = transform.position;
 
@@ -152,7 +160,7 @@ public class VivePawn : NetworkBehaviour
         if (!isLocalPlayer)
             return;
 
-        viveManipulator.CheckHits(ViveBridge.Position, ViveBridge.Forward);
+        viveManipulator.CheckHits(ViveBridge.Position, ViveBridge.Forward, isServer);
     }
 
     [ClientRpc]

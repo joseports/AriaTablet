@@ -5,6 +5,7 @@ namespace Assets.New_Scripts
     public class ViveManipulator
     {
         public const float MinimumPrimitiveDistance = 0.5f;
+        public const float SmoothStep = 5f;
         private const string rayMesh = "ray";
         private const string raySphereMesh = "raySphere";
         private readonly GameObject vivePawn;
@@ -262,7 +263,7 @@ namespace Assets.New_Scripts
         }
 
 
-        public void CheckHits(Vector3 controllerPosition, Vector3 controllerForward)
+        public void CheckHits(Vector3 controllerPosition, Vector3 controllerForward, bool isServer = true)
         {
             if (InteractionMode == InteractionMode.SpawnPrimitives || IsManipulating || IsScaling)
                 return;
@@ -283,7 +284,10 @@ namespace Assets.New_Scripts
                     originalMaterialColor = renderer.material.color;
                     renderer.material.color = Colors.TransparentGreen;
                 }
-                sphere.transform.position = hitInfo.point;
+                var newPosition = new Vector3(0, 0, (hitInfo.point - controllerPosition).magnitude);
+                
+                sphere.transform.localPosition = isServer ? newPosition : Vector3.Lerp(sphere.transform.localPosition,newPosition,Time.deltaTime*SmoothStep);
+
                 sphere.GetComponent<MeshRenderer>().enabled = true;
                 
             }
