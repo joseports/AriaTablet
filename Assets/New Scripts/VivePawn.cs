@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using Assets.New_Scripts;
 using UnityEngine.Networking;
-
+using System.Collections.Generic;
 public class VivePawn : NetworkBehaviour
 {
     public ViveBridge ViveBridge;
@@ -11,7 +11,9 @@ public class VivePawn : NetworkBehaviour
 
     private ViveManipulator viveManipulator;
    
+    //JFG
     private bool IsScaling = false;
+    private List<Vector3> indPositions;
 
     // Use this for initialization
     void Start()
@@ -28,6 +30,7 @@ public class VivePawn : NetworkBehaviour
         ViveBridge.PadUnclicked += ViveBridge_PadUnclicked;
         ViveBridge.Ungripped += ViveBridge_Ungripped;
 
+        indPositions = new List<Vector3>();
         //currentPosition = new Vector3(0, 0, 0);
     }
 
@@ -84,6 +87,8 @@ public class VivePawn : NetworkBehaviour
     {
         Debug.Log("TriggerClicked");
         
+
+        //Debug.Log("ray hit:" + viveManipulator.RayHitPoint());
         switch (viveManipulator.InteractionMode)
         {
             case InteractionMode.Manipulation:
@@ -110,18 +115,27 @@ public class VivePawn : NetworkBehaviour
 
             case InteractionMode.SpawnPrimitives:
                 if(isLocalPlayer)
-                    SpawnFactory.Spawn("Prefabs/SphereMarker", CalculatePrimitivePosition(0.5f), transform.rotation);
+                    //SpawnFactory.Spawn("Prefabs/SphereMarker", CalculatePrimitivePosition(0.5f), transform.rotation);
+                    SpawnFactory.Spawn("Prefabs/SphereMarker", viveManipulator.RayHitPoint(), transform.rotation);
                 break;
 
         }
     }
 
+   // if it is 0.5 modify
     Vector3 CalculatePrimitivePosition(float distance)
     {
         Ray r = new Ray(transform.position, transform.forward);
         return r.GetPoint(distance);
     }
 
+
+    //Vector3 SetPrimitiveVertex()
+   // {
+        // Ray r = new Ray(transform.position, transform.forward);
+        //return r.
+
+   // }
 
     // Update is called once per frame
     void Update()

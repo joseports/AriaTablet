@@ -16,6 +16,8 @@ namespace Assets.New_Scripts
         private int quadrantWorld;
         private int quadrantObject;
         private float scaleFactor = 1.0f;
+        public Vector3 hitPoint;
+        public float rayBeamLength = 0.5f;
 
         private Color originalMaterialColor;
 
@@ -144,9 +146,10 @@ namespace Assets.New_Scripts
             }
 
             quadrantWorld = QuadrantFromVector(new Vector3(0, 0, 1));
+            //quadrantWorld = QuadrantFromVector(new Vector3(1, 0, 0));
             quadrantObject = QuadrantFromVector(vivePawn.transform.forward.normalized);
 
-            Debug.Log("Quadrantword" + quadrantWorld);
+            Debug.Log("Quadrantworld" + quadrantWorld);
             switch (quadrantWorld)
             {
                 case 1:
@@ -285,7 +288,10 @@ namespace Assets.New_Scripts
                     renderer.material.color = Colors.TransparentGreen;
                 }
                 var newPosition = new Vector3(0, 0, (hitInfo.point - controllerPosition).magnitude);
-                
+
+                //for indicators
+                hitPoint = hitInfo.point;
+
                 sphere.transform.localPosition = isServer ? newPosition : Vector3.Lerp(sphere.transform.localPosition,newPosition,Time.deltaTime*SmoothStep);
 
                 sphere.GetComponent<MeshRenderer>().enabled = true;
@@ -293,6 +299,9 @@ namespace Assets.New_Scripts
             }
             else
             {
+                Ray r = new Ray(controllerPosition, controllerForward);
+                hitPoint = r.GetPoint(rayBeamLength);
+
                 if (lastCollided != null)
                 {
                     prevCollided = lastCollided;
@@ -327,6 +336,10 @@ namespace Assets.New_Scripts
         void RestoreColor(GameObject gameObject)
         {
             gameObject.GetComponent<MeshRenderer>().material.color = originalMaterialColor;
+        }
+        public Vector3 RayHitPoint()
+        {
+            return hitPoint;
         }
 
     }
