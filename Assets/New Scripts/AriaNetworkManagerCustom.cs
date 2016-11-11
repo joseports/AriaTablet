@@ -67,7 +67,7 @@ namespace Assets.New_Scripts
             int spacing = 35;
             int spacingextra = 70;
             //string conn = "10.128.93.241";
-            string conn = "10.128.92.9";
+            string conn = "10.128.93.115";
             //string conn;
 
             if (!NetworkClient.active && !NetworkServer.active && manager.matchMaker == null)

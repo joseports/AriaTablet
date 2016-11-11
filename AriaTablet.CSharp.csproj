@@ -74,12 +74,15 @@
     <Compile Include="Assets\New Scripts\Colors.cs" />
     <Compile Include="Assets\New Scripts\DebugGUI.cs" />
     <Compile Include="Assets\New Scripts\InteractionMode.cs" />
+    <Compile Include="Assets\New Scripts\PersistentObjectData.cs" />
     <Compile Include="Assets\New Scripts\PrimitiveGeneration.cs" />
+    <Compile Include="Assets\New Scripts\ScrollSnapRect.cs" />
     <Compile Include="Assets\New Scripts\SpawnFactory.cs" />
     <Compile Include="Assets\New Scripts\ViveBridge.cs" />
     <Compile Include="Assets\New Scripts\ViveController.cs" />
     <Compile Include="Assets\New Scripts\ViveManipulator.cs" />
     <Compile Include="Assets\New Scripts\VivePawn.cs" />
+    <Compile Include="Assets\New Scripts\createPrimitive.cs" />
     <Compile Include="Assets\SteamVR\Extras\SteamVR_GazeTracker.cs" />
     <Compile Include="Assets\SteamVR\Extras\SteamVR_LaserPointer.cs" />
     <Compile Include="Assets\SteamVR\Extras\SteamVR_Teleporter.cs" />

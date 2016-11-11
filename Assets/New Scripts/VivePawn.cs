@@ -2,6 +2,7 @@
 using Assets.New_Scripts;
 using UnityEngine.Networking;
 using System.Collections.Generic;
+
 public class VivePawn : NetworkBehaviour
 {
     public ViveBridge ViveBridge;
@@ -14,7 +15,11 @@ public class VivePawn : NetworkBehaviour
     //JFG
     private bool IsScaling = false;
     private List<Vector3> indPositions;
-
+    public int m_ObjectPoolSize = 8;
+    public int currIndicatorCount = 0;
+    private bool HasSpawnedInds = false;
+    public GameObject indicator;
+    public GameObject prim1;
     // Use this for initialization
     void Start()
     {
@@ -30,7 +35,10 @@ public class VivePawn : NetworkBehaviour
         ViveBridge.PadUnclicked += ViveBridge_PadUnclicked;
         ViveBridge.Ungripped += ViveBridge_Ungripped;
 
+        SpawnFactory.Init();
         indPositions = new List<Vector3>();
+        SpawnFactory.SetObject(prim1);
+        ClientScene.RegisterPrefab(indicator);
         //currentPosition = new Vector3(0, 0, 0);
     }
 
@@ -47,6 +55,11 @@ public class VivePawn : NetworkBehaviour
     {
         RpcChangeMode();
         RpcChangeRayColor();
+        Debug.Log("Spawn status is" + HasSpawnedInds);
+        if (HasSpawnedInds)
+        {
+            SpawnFactory.UnSpawn();
+        }
     }
 
     [ClientRpc]
@@ -110,13 +123,20 @@ public class VivePawn : NetworkBehaviour
         {
             case InteractionMode.ScalePrefabs:
             case InteractionMode.Manipulation:
+                
+
                 RpcReleaseObject();
+               
                 break;
 
             case InteractionMode.SpawnPrimitives:
                 if(isLocalPlayer)
-                    //SpawnFactory.Spawn("Prefabs/SphereMarker", CalculatePrimitivePosition(0.5f), transform.rotation);
-                    SpawnFactory.Spawn("Prefabs/SphereMarker", viveManipulator.RayHitPoint(), transform.rotation);
+                    SpawnFactory.Spawn("Prefabs/SphereMarker", CalculatePrimitivePosition(0.5f), transform.rotation);
+                //SpawnFactory.Spawn("Prefabs/SphereMarker", viveManipulator.RayHitPoint(), transform.rotation);
+                if (!HasSpawnedInds)
+                {
+                    HasSpawnedInds = true;
+                }
                 break;
 
         }
