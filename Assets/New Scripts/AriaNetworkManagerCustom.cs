@@ -83,7 +83,7 @@ namespace Assets.New_Scripts
                     manager.StartClient();
                 }
                 manager.networkAddress = GUI.TextField(new Rect(xpos + 100, ypos, 95, 20), manager.networkAddress);
-                manager.networkAddress = conn;
+                //manager.networkAddress = conn;
                 ypos += spacingextra;
 
                 if (GUI.Button(new Rect(xpos, ypos, 200, 20), "LAN Server Only(S)"))

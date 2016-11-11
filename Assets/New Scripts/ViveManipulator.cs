@@ -337,10 +337,7 @@ namespace Assets.New_Scripts
         {
             gameObject.GetComponent<MeshRenderer>().material.color = originalMaterialColor;
         }
-        public Vector3 RayHitPoint()
-        {
-            return hitPoint;
-        }
+
 
     }
 }
