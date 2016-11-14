@@ -36,9 +36,6 @@ namespace Assets.New_Scripts
 
         public void UnSpawn()
         {
-            if (currIndicatorCount > 3)
-                GeneratePrimitive();
-
             for (var i = 0; i < indicatorSpawnPool.Count; i++)
             {
                 NetworkServer.Destroy(indicatorSpawnPool[i]);
@@ -48,35 +45,7 @@ namespace Assets.New_Scripts
 
             indPositions.Clear();
             indicatorSpawnPool.Clear();
-
         }
 
-        public void GeneratePrimitive()
-        {
-            if (indicatorSpawnPool.Count > 0)
-            {
-                // passetId = mBox.GetComponent<NetworkIdentity>().assetId;
-                var createPrimitive = new CreatePrimitive();
-                //NetworkHash128 assetId = ((GameObject) Resources.Load("Prefabs/ProceduralBox")).GetComponent<NetworkIdentity>().assetId;
-
-                var newBox = createPrimitive.CreateBox(indPositions, mat);
-
-
-                if (indPositions.Count == 4)
-                    newBox.tag = FourPointPrimitive;
-                else if (indPositions.Count == 8)
-                    newBox.tag = EightPointPrimitive;
-                newBox.AddComponent<PersistentObjectData>();
-                newBox.AddComponent<NetworkIdentity>();
-                var assetId = NetworkHash128.Parse(newBox.name);
-                ClientScene.RegisterPrefab(newBox, assetId);
-                Debug.Log(newBox.GetComponent<NetworkIdentity>().assetId);
-                var instance = (GameObject)GameObject.Instantiate(newBox, Vector3.zero, Quaternion.identity);
-                NetworkServer.Spawn(instance);
-                proceduralBoxes.Add(newBox);
-
-            }
-
-        }
     }
 }

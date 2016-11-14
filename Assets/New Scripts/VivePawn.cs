@@ -14,10 +14,10 @@ public class VivePawn : NetworkBehaviour
 
     //JFG
     private bool HasSpawnedInds = false;
+
     [SyncVar]
     public Vector3 IndPosition;
     private List<Vector3> indPositions;
-    public BoxGenerator mBox;
     public Material mat;
 
     // Use this for initialization
@@ -57,26 +57,15 @@ public class VivePawn : NetworkBehaviour
         Debug.Log("Spawn status is" + HasSpawnedInds);
         if (HasSpawnedInds)
         {
-            SpawnPrimitive();
-            RpcSpawnBox();
+            RpcSpawnPrimitive();
+            primitiveManager.UnSpawn();
         }
     }
-
-    private void RpcSpawnBox()
-    {
-        primitiveManager.UnSpawn();
-    }
-
 
     public void AddIndicatorPosition(Vector3 pos)
     {
         RpcAddPosition(pos);
 
-    }
-
-    public void SpawnPrimitive()
-    {
-        RpcSpawnPrimitive();
     }
 
     [ClientRpc]
@@ -92,30 +81,22 @@ public class VivePawn : NetworkBehaviour
 
         if (isLocalPlayer)
         {
-
-            
             Debug.Log("Number of points:" + indPositions.Count);
-            mBox = gameObject.AddComponent<BoxGenerator>();
-            GameObject newBox = mBox.createBox(indPositions, mat);
-
+            GameObject newBox = BoxGenerator.CreateBox(indPositions, mat);
 
             if (indPositions.Count == 4)
             {
-                newBox.tag = "fourPointPrimitive";
+                newBox.tag = "FourPointPrimitive";
             }
             else if (indPositions.Count == 8)
             {
-                newBox.tag = "eightPointPrimitive";
+                newBox.tag = "EightPointPrimitive";
             }
             newBox.AddComponent<PersistentObjectData>();
             newBox.AddComponent<NetworkIdentity>();
             
             indPositions.Clear();
-            
-
-
-
-
+           
         }
     }
 
