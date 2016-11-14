@@ -11,9 +11,14 @@ public class VivePawn : NetworkBehaviour
     private PrimitiveManager primitiveManager;
 
     private ViveManipulator viveManipulator;
-   
+
     //JFG
-    private bool hasSpawnedInds;
+    private bool HasSpawnedInds = false;
+    [SyncVar]
+    public Vector3 IndPosition;
+    private List<Vector3> indPositions;
+    public BoxGenerator mBox;
+    public Material mat;
 
     // Use this for initialization
     void Start()
@@ -31,6 +36,9 @@ public class VivePawn : NetworkBehaviour
         ViveBridge.Ungripped += ViveBridge_Ungripped;
 
         primitiveManager = new PrimitiveManager();
+
+        indPositions = new List<Vector3>();
+
     }
 
     private void ViveBridge_Ungripped(object sender, ClickedEventArgs e)
@@ -46,9 +54,10 @@ public class VivePawn : NetworkBehaviour
     {
         RpcChangeMode();
         RpcChangeRayColor();
-        Debug.Log("Spawn status is" + hasSpawnedInds);
-        if (hasSpawnedInds)
+        Debug.Log("Spawn status is" + HasSpawnedInds);
+        if (HasSpawnedInds)
         {
+            SpawnPrimitive();
             RpcSpawnBox();
         }
     }
@@ -56,6 +65,58 @@ public class VivePawn : NetworkBehaviour
     private void RpcSpawnBox()
     {
         primitiveManager.UnSpawn();
+    }
+
+
+    public void AddIndicatorPosition(Vector3 pos)
+    {
+        RpcAddPosition(pos);
+
+    }
+
+    public void SpawnPrimitive()
+    {
+        RpcSpawnPrimitive();
+    }
+
+    [ClientRpc]
+    void RpcAddPosition(Vector3 position)
+    {
+
+        indPositions.Add(position);
+    }
+
+    [ClientRpc]
+    void RpcSpawnPrimitive()
+    {
+
+        if (isLocalPlayer)
+        {
+
+            
+            Debug.Log("Number of points:" + indPositions.Count);
+            mBox = gameObject.AddComponent<BoxGenerator>();
+            GameObject newBox = mBox.createBox(indPositions, mat);
+
+
+            if (indPositions.Count == 4)
+            {
+                newBox.tag = "fourPointPrimitive";
+            }
+            else if (indPositions.Count == 8)
+            {
+                newBox.tag = "eightPointPrimitive";
+            }
+            newBox.AddComponent<PersistentObjectData>();
+            newBox.AddComponent<NetworkIdentity>();
+            
+            indPositions.Clear();
+            
+
+
+
+
+        }
     }
 
     [ClientRpc]
@@ -128,10 +189,10 @@ public class VivePawn : NetworkBehaviour
                     var primitive = SpawnFactory.Spawn("Prefabs/SphereMarker", CalculatePrimitivePosition(0.5f), transform.rotation);
                     primitiveManager.RegisterPrimitive(primitive, primitive.transform.position);
                 }
-                
-                if (!hasSpawnedInds)
+                AddIndicatorPosition(CalculatePrimitivePosition(0.5f));
+                if (!HasSpawnedInds)
                 {
-                    hasSpawnedInds = true;
+                    HasSpawnedInds = true;
                 }
                 break;
 
