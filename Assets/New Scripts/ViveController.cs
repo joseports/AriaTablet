@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using System.Collections;
+using Assets.New_Scripts;
 using UnityEngine.Networking;
 
 public class ViveController : MonoBehaviour

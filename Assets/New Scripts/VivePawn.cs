@@ -1,30 +1,27 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
 using Assets.New_Scripts;
+using UnityEngine;
 using UnityEngine.Networking;
-using System.Collections.Generic;
 
 public class VivePawn : NetworkBehaviour
 {
     public ViveBridge ViveBridge;
     private GameObject rayMesh;
-    private MeshRenderer rayMeshRenderer;
     private PrimitiveManager primitiveManager;
 
     private ViveManipulator viveManipulator;
 
     //JFG
-    private bool HasSpawnedInds = false;
+    private bool hasSpawnedInds;
 
-    [SyncVar]
-    public Vector3 IndPosition;
     private List<Vector3> indPositions;
-    public Material mat;
+    public Material ProceduralBoxMaterial;
 
     // Use this for initialization
     void Start()
     {
         ViveBridge = GameObject.Find("ViveBridge").GetComponent<ViveBridge>();
-        
+
         viveManipulator = new ViveManipulator(gameObject);
 
         rayMesh = GetComponentInChildren<MeshRenderer>().transform.parent.gameObject;
@@ -55,14 +52,18 @@ public class VivePawn : NetworkBehaviour
 
     private void ViveBridge_PadUnclicked(object sender, ClickedEventArgs e)
     {
-        RpcChangeMode();
-        RpcChangeRayColor();
-        Debug.Log("Spawn status is" + HasSpawnedInds);
-        if (HasSpawnedInds)
+        Debug.Log("Spawn status is" + hasSpawnedInds);
+        if (hasSpawnedInds)
         {
             RpcSpawnPrimitive();
             primitiveManager.UnSpawn();
+
+            // Do not change mode if you have created a box
+            return;
         }
+
+        RpcChangeMode();
+        RpcChangeRayColor();
     }
 
     public void AddIndicatorPosition(Vector3 pos)
@@ -85,7 +86,7 @@ public class VivePawn : NetworkBehaviour
         if (isLocalPlayer)
         {
             Debug.Log("Number of points:" + indPositions.Count);
-            GameObject newBox = BoxGenerator.CreateBox(indPositions, mat);
+            GameObject newBox = BoxGenerator.CreateBox(indPositions, ProceduralBoxMaterial);
 
             if (indPositions.Count == 4)
             {
@@ -97,9 +98,9 @@ public class VivePawn : NetworkBehaviour
             }
             newBox.AddComponent<PersistentObjectData>();
             newBox.AddComponent<NetworkIdentity>();
-            
+
             indPositions.Clear();
-           
+
         }
     }
 
@@ -114,7 +115,7 @@ public class VivePawn : NetworkBehaviour
                     viveManipulator.DeactivateTempPrimitive();
                 break;
         }
-        
+
         // this actually changes the mode
         viveManipulator.ChangeMode();
 
@@ -122,7 +123,7 @@ public class VivePawn : NetworkBehaviour
         switch (viveManipulator.InteractionMode)
         {
             case InteractionMode.SpawnPrimitives:
-                if(isLocalPlayer)
+                if (isLocalPlayer)
                     viveManipulator.ActivateTempPrimitive(ViveManipulator.MinimumPrimitiveDistance);
                 break;
         }
@@ -139,7 +140,7 @@ public class VivePawn : NetworkBehaviour
     private void ViveBridge_TriggerClicked(object sender, ClickedEventArgs e)
     {
         Debug.Log("TriggerClicked");
-        
+
 
         //Debug.Log("ray hit:" + viveManipulator.RayHitPoint());
         switch (viveManipulator.InteractionMode)
@@ -164,39 +165,31 @@ public class VivePawn : NetworkBehaviour
             case InteractionMode.ScalePrefabs:
             case InteractionMode.Manipulation:
                 RpcReleaseObject();
-               
+
                 break;
 
             case InteractionMode.SpawnPrimitives:
                 if (isLocalPlayer)
                 {
-                    var primitive = SpawnFactory.Spawn("Prefabs/SphereMarker", CalculatePrimitivePosition(0.5f), transform.rotation);
+                    var primitive = SpawnFactory.Spawn("Prefabs/SphereMarker", CalculatePrimitivePosition(0.5f),
+                        transform.rotation);
                     primitiveManager.RegisterPrimitive(primitive, primitive.transform.position);
                 }
                 AddIndicatorPosition(CalculatePrimitivePosition(0.5f));
-                if (!HasSpawnedInds)
+                if (!hasSpawnedInds)
                 {
-                    HasSpawnedInds = true;
+                    hasSpawnedInds = true;
                 }
                 break;
-
         }
     }
 
-   // if it is 0.5 modify
+    // if it is 0.5 modify
     Vector3 CalculatePrimitivePosition(float distance)
     {
         Ray r = new Ray(transform.position, transform.forward);
         return r.GetPoint(distance);
     }
-
-
-    //Vector3 SetPrimitiveVertex()
-   // {
-        // Ray r = new Ray(transform.position, transform.forward);
-        //return r.
-
-   // }
 
     // Update is called once per frame
     void Update()
@@ -213,8 +206,10 @@ public class VivePawn : NetworkBehaviour
         }
         else
         {
-            transform.position = Vector3.Lerp(transform.position, ViveBridge.Position, Time.deltaTime*ViveManipulator.SmoothStep);
-            transform.rotation = Quaternion.Lerp(transform.rotation, ViveBridge.Rotation, Time.deltaTime* ViveManipulator.SmoothStep);
+            transform.position = Vector3.Lerp(transform.position, ViveBridge.Position,
+                Time.deltaTime*ViveManipulator.SmoothStep);
+            transform.rotation = Quaternion.Lerp(transform.rotation, ViveBridge.Rotation,
+                Time.deltaTime*ViveManipulator.SmoothStep);
         }
         rayMesh.transform.rotation = transform.rotation;
 
@@ -225,7 +220,7 @@ public class VivePawn : NetworkBehaviour
         switch (viveManipulator.InteractionMode)
         {
             case InteractionMode.ScalePrefabs:
-            RpcScaleObject();
+                RpcScaleObject();
                 break;
         }
     }
@@ -292,5 +287,4 @@ public class VivePawn : NetworkBehaviour
     {
         Debug.Log(log);
     }
-
 }

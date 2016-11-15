@@ -1,7 +1,5 @@
-﻿using System;
+﻿using Assets.New_Scripts;
 using UnityEngine;
-using System.Collections;
-using Assets.New_Scripts;
 using UnityEngine.Networking;
 
 public class ViveBridge : NetworkBehaviour
@@ -26,7 +24,10 @@ public class ViveBridge : NetworkBehaviour
     public event ClickedEventHandler Gripped;
     public event ClickedEventHandler Ungripped;
 
-    public Vector3 DeltaPosition {  get { return Position - LastPosition; } }
+    public Vector3 DeltaPosition
+    {
+        get { return Position - LastPosition; }
+    }
 
     // Use this for initialization
     public override void OnStartClient()
@@ -35,7 +36,7 @@ public class ViveBridge : NetworkBehaviour
     }
 
     // Update is called once per frame
-    void Update ()
+    void Update()
     {
         if (controller != null)
         {

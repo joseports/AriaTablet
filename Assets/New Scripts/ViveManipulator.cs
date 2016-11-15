@@ -136,6 +136,7 @@ namespace Assets.New_Scripts
 
             if (ManipulatedObject == null)
                 return;
+
             var deltaP = CurrentPosition - PrevPosition;
             Debug.Log("delta: " + deltaP);
 
@@ -146,7 +147,6 @@ namespace Assets.New_Scripts
             }
 
             quadrantWorld = QuadrantFromVector(new Vector3(0, 0, 1));
-            //quadrantWorld = QuadrantFromVector(new Vector3(1, 0, 0));
             quadrantObject = QuadrantFromVector(vivePawn.transform.forward.normalized);
 
             Debug.Log("Quadrantworld" + quadrantWorld);
@@ -249,7 +249,7 @@ namespace Assets.New_Scripts
             else return -1;
         }
 
-        private float SignedAngle(Vector3 viewForward, Vector3 objForward)
+        private static float SignedAngle(Vector3 viewForward, Vector3 objForward)
         {
             // the vector that we want to measure an angle from
 
@@ -337,7 +337,5 @@ namespace Assets.New_Scripts
         {
             gameObject.GetComponent<MeshRenderer>().material.color = originalMaterialColor;
         }
-
-
     }
 }
