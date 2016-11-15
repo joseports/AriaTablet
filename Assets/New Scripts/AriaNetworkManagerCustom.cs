@@ -19,6 +19,7 @@ namespace Assets.New_Scripts
         public int offsetX;
         [SerializeField]
         public int offsetY;
+        public string conn;
 
         void Awake()
         {
@@ -67,7 +68,7 @@ namespace Assets.New_Scripts
             int spacing = 35;
             int spacingextra = 70;
             //string conn = "10.128.93.241";
-            string conn = "10.128.93.115";
+            //string conn = "10.128.92.230";
             //string conn;
 
             if (!NetworkClient.active && !NetworkServer.active && manager.matchMaker == null)
@@ -83,7 +84,7 @@ namespace Assets.New_Scripts
                     manager.StartClient();
                 }
                 manager.networkAddress = GUI.TextField(new Rect(xpos + 100, ypos, 95, 20), manager.networkAddress);
-                //manager.networkAddress = conn;
+                manager.networkAddress = conn;
                 ypos += spacingextra;
 
                 if (GUI.Button(new Rect(xpos, ypos, 200, 20), "LAN Server Only(S)"))

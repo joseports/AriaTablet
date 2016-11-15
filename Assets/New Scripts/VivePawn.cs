@@ -47,7 +47,10 @@ public class VivePawn : NetworkBehaviour
             return;
 
         Debug.Log("Ungripped");
-        SpawnFactory.Spawn("Prefabs/TestPrefab", Vector3.zero, Quaternion.identity);
+        //SpawnFactory.Spawn("Prefabs/TestPrefab", Vector3.zero, Quaternion.identity);
+
+        primitiveManager.UndoSpawns();
+
     }
 
     private void ViveBridge_PadUnclicked(object sender, ClickedEventArgs e)

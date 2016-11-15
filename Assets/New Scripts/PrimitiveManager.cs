@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.Networking;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Assets.New_Scripts
 {
@@ -46,6 +48,19 @@ namespace Assets.New_Scripts
             indPositions.Clear();
             indicatorSpawnPool.Clear();
         }
+
+        public void UndoSpawns()
+        {
+
+            if (indicatorSpawnPool.Count > 0)
+            {
+                NetworkServer.Destroy(indicatorSpawnPool[indicatorSpawnPool.Count - 1].gameObject);
+                indicatorSpawnPool.RemoveAt(indicatorSpawnPool.Count - 1);
+                currIndicatorCount--;
+            }
+        }
+
+
 
     }
 }
