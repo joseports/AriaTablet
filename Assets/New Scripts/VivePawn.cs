@@ -3,6 +3,8 @@ using Assets.New_Scripts;
 using UnityEngine;
 using UnityEngine.Networking;
 
+
+
 public class VivePawn : NetworkBehaviour
 {
     public ViveBridge ViveBridge;
@@ -16,6 +18,9 @@ public class VivePawn : NetworkBehaviour
 
     private List<Vector3> indPositions;
     public Material ProceduralBoxMaterial;
+    public GameObject pointBoard;
+    private TextMesh newText;
+    private GameObject textBoardPrefab;
 
     // Use this for initialization
     void Start()
@@ -35,6 +40,28 @@ public class VivePawn : NetworkBehaviour
         primitiveManager = new PrimitiveManager();
 
         indPositions = new List<Vector3>();
+
+        //CreatePointDisplay();
+        if (isLocalPlayer)
+        {
+            textBoardPrefab = (GameObject)Instantiate(
+                                            pointBoard,
+                                            new Vector3(0, 0, 0),
+                                            Quaternion.identity);
+
+            if (pointBoard != null)
+            {
+                Debug.Log("found board");
+                newText = textBoardPrefab.GetComponentInChildren(typeof(TextMesh)) as TextMesh;
+                newText.text = "0 points";
+
+            }
+
+
+            textBoardPrefab.SetActive(false);
+
+        }
+
 
     }
 
@@ -71,6 +98,80 @@ public class VivePawn : NetworkBehaviour
         RpcAddPosition(pos);
 
     }
+
+    public void CreatePointDisplay()
+    {
+
+        RpcSpawnPointInfo();
+    }
+
+    public void EnablePointDisplay()
+    {
+        RpcEnableDisplay();
+    }
+
+    public void DisablePointDisplay()
+    {
+        RpcDisableDisplay();
+    }
+
+    public void UpdateDisplayPosition(Vector3 pos)
+    {
+        RpcUpdateDisplayPosition(pos);
+       
+        
+    }
+
+    [ClientRpc]
+    void RpcSpawnPointInfo()
+    {
+        if (isLocalPlayer)
+        {
+            textBoardPrefab = (GameObject)Instantiate(
+                                            pointBoard,
+                                            new Vector3(0, 0, 0),
+                                            Quaternion.identity);
+
+            if (pointBoard != null)
+            {
+                Debug.Log("found board");
+                newText = textBoardPrefab.GetComponentInChildren(typeof(TextMesh)) as TextMesh;
+                newText.text = "0 points";
+
+            }
+
+
+            
+
+        }
+
+    }
+
+    [ClientRpc]
+    void RpcEnableDisplay()
+    {
+        if (isLocalPlayer)
+            textBoardPrefab.SetActive(true);
+    }
+
+    [ClientRpc]
+    void RpcDisableDisplay()
+    {
+        if (isLocalPlayer)
+            textBoardPrefab.SetActive(false);
+
+    }
+    [ClientRpc]
+    void RpcUpdateDisplayPosition(Vector3 newPos)
+    {
+        if (isLocalPlayer)
+        {
+            textBoardPrefab.transform.position = CalculatePrimitivePosition(0.7f);
+            
+        }
+            
+    }
+
 
     [ClientRpc]
     void RpcAddPosition(Vector3 position)
@@ -165,7 +266,8 @@ public class VivePawn : NetworkBehaviour
             case InteractionMode.ScalePrefabs:
             case InteractionMode.Manipulation:
                 RpcReleaseObject();
-
+               
+                DisablePointDisplay();
                 break;
 
             case InteractionMode.SpawnPrimitives:
@@ -175,10 +277,15 @@ public class VivePawn : NetworkBehaviour
                         transform.rotation);
                     primitiveManager.RegisterPrimitive(primitive, primitive.transform.position);
                 }
-                AddIndicatorPosition(CalculatePrimitivePosition(0.5f));
+                AddIndicatorPosition(CalculatePrimitivePosition (0.5f));
+                
                 if (!hasSpawnedInds)
                 {
                     hasSpawnedInds = true;
+                    
+                   
+                    EnablePointDisplay();
+                    
                 }
                 break;
         }
@@ -199,6 +306,8 @@ public class VivePawn : NetworkBehaviour
 
         viveManipulator.PrevPosition = transform.position;
 
+
+
         if (isServer)
         {
             transform.position = ViveBridge.Position;
@@ -214,6 +323,11 @@ public class VivePawn : NetworkBehaviour
         rayMesh.transform.rotation = transform.rotation;
 
         viveManipulator.CurrentPosition = transform.position;
+
+       
+            textBoardPrefab.transform.position = CalculatePrimitivePosition(0.7f);
+            newText.text = indPositions.Count + "points";
+       
 
         CheckHits();
 
