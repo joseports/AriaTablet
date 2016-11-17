@@ -75,6 +75,7 @@
     <Compile Include="Assets\New Scripts\Colors.cs" />
     <Compile Include="Assets\New Scripts\DebugGUI.cs" />
     <Compile Include="Assets\New Scripts\EventManager.cs" />
+    <Compile Include="Assets\New Scripts\InstanceID.cs" />
     <Compile Include="Assets\New Scripts\InteractionMode.cs" />
     <Compile Include="Assets\New Scripts\PersistentObjectData.cs" />
     <Compile Include="Assets\New Scripts\PrimitiveManager.cs" />
