@@ -5,6 +5,15 @@
         None,
         Manipulation,
         SpawnPrimitives,
-        ScalePrefabs
+        ScalePrefabs,
+        SpawnObjects
+    }
+
+    public enum ObjectType
+    {
+        Type1,
+        Type2,
+        Type3,
+        Type4
     }
 }

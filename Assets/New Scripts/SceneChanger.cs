@@ -9,7 +9,7 @@ namespace Assets.New_Scripts
 
         void OnCollisionEnter(Collision collision)
         {
-            if (collision.collider.tag == "rightVRController")
+            if (collision.collider.tag == "GameController")
             {
                 if (Scene1)
                 {
