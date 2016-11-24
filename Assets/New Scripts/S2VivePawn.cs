@@ -42,7 +42,8 @@ public class S2VivePawn : NetworkBehaviour
     int selectedOption;
 
     private bool hasSpawnedInds;
-
+    private bool isSpawnState;
+    private Vector3 currPos;
     private List<Vector3> indPositions;
     public Material ProceduralBoxMaterial;
     public GameObject pointBoard;
@@ -152,11 +153,14 @@ public class S2VivePawn : NetworkBehaviour
 
     private void ViveBridge_PadUnclicked(object sender, ClickedEventArgs e)
     {
-        Debug.Log("Spawn status is" + hasSpawnedInds);
-        if (hasSpawnedInds)
+        Debug.Log("Spawn status is" + isSpawnState);
+        if (isSpawnState)
         {
-            RpcSpawnPrimitive();
-            primitiveManager.UnSpawn();
+            
+            RpcSpawnObject(currPos, selectedOption);
+
+            //RpcSpawnPrimitive();
+            // primitiveManager.UnSpawn();
 
             // Do not change mode if you have created a box
             return;
@@ -201,7 +205,7 @@ public class S2VivePawn : NetworkBehaviour
         Debug.Log(selectedOption);
 
         assetId = lstPrefabs[selectedOption].GetComponent<NetworkIdentity>().assetId;
-        RpcSpawnObject(pos, assetId, selectedOption);
+        RpcSpawnObject(pos, selectedOption);
 
     }
 
@@ -216,7 +220,7 @@ public class S2VivePawn : NetworkBehaviour
     }
 
     [ClientRpc]
-    void RpcSpawnObject(Vector3 objPosition, NetworkHash128 assetId, int option)
+    void RpcSpawnObject(Vector3 objPosition, int option)
     {
 
         currPrefab = new GameObject();
@@ -387,7 +391,22 @@ public class S2VivePawn : NetworkBehaviour
                 if (isLocalPlayer)
                     viveManipulator.ActivateTempPrimitive(ViveManipulator.MinimumPrimitiveDistance);
                 break;
+
+                
         }
+
+        switch (viveManipulator.InteractionMode)
+        {
+            case InteractionMode.SpawnObjects:
+                if (isLocalPlayer)
+                    viveManipulator.ActivateTempPrimitive(ViveManipulator.MinimumPrimitiveDistance);
+                break;
+
+
+        }
+
+
+
     }
 
     [ClientRpc]
@@ -402,7 +421,7 @@ public class S2VivePawn : NetworkBehaviour
     {
         Debug.Log("TriggerClicked");
 
-
+        currPos = CalculatePrimitivePosition(0.5f);
         //Debug.Log("ray hit:" + viveManipulator.RayHitPoint());
         switch (viveManipulator.InteractionMode)
         {
@@ -451,6 +470,7 @@ public class S2VivePawn : NetworkBehaviour
 
                 case InteractionMode.SpawnObjects:
 
+                isSpawnState = true;
                 break;
 
         }
@@ -463,6 +483,8 @@ public class S2VivePawn : NetworkBehaviour
         return r.GetPoint(distance);
     }
 
+
+   
     // Update is called once per frame
     void Update()
     {

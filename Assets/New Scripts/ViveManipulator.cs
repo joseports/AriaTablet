@@ -79,6 +79,10 @@ namespace Assets.New_Scripts
                 case InteractionMode.SpawnPrimitives:
                     InteractionMode = InteractionMode.Manipulation;
                     break;
+
+                case InteractionMode.SpawnObjects:
+                    InteractionMode = InteractionMode.Manipulation;
+                    break;
             }
 
             Debug.Log("InteractionMode: " + InteractionMode);
@@ -118,6 +122,10 @@ namespace Assets.New_Scripts
                     break;
                 case InteractionMode.SpawnPrimitives:
                     newColor = Colors.TransparentGold;
+                    break;
+
+                case InteractionMode.SpawnObjects:
+                    newColor = Color.blue;
                     break;
 
                 case InteractionMode.ScalePrefabs:
