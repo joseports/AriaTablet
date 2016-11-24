@@ -452,7 +452,7 @@ public class S2VivePawn : NetworkBehaviour
             case InteractionMode.SpawnPrimitives:
                 if (isLocalPlayer)
                 {
-                    var primitive = SpawnFactory.Spawn("Prefabs/SphereMarker", CalculatePrimitivePosition(0.5f),
+                    var primitive = SpawnFactory.Spawn("Prefabs/Scene1/SphereMarker", CalculatePrimitivePosition(0.5f),
                         transform.rotation);
                     primitiveManager.RegisterPrimitive(primitive, primitive.transform.position);
                 }

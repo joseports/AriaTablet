@@ -14,14 +14,5 @@ namespace Assets.New_Scripts
             return instance;
         }
 
-        public static GameObject Spawn2(string resourceId, Vector3 position, Quaternion rotation)
-        {
-            var prefab = Resources.Load<GameObject>(resourceId);
-            var instance = (GameObject)GameObject.Instantiate(prefab, position, rotation);
-
-            //NetworkServer.Spawn(instance);
-            return instance;
-        }
-
     }
 }
