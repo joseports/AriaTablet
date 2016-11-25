@@ -134,7 +134,11 @@ namespace Assets.New_Scripts
             }
 
             foreach (var meshRender in vivePawn.GetComponentsInChildren<MeshRenderer>())
+            {
+                if (meshRender.gameObject.GetComponent<TextMesh>() != null)
+                    return;
                 meshRender.material.color = newColor;
+            }
         }
 
         public void ScaleObject()

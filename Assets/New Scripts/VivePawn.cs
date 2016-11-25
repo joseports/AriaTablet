@@ -12,9 +12,6 @@ public class VivePawn : NetworkBehaviour
     private PrimitiveManager primitiveManager;
     private ViveManipulator viveManipulator;
 
-    //JFG
-    private bool hasSpawnedInds;
-
     // Use this for initialization
     void Start()
     {
@@ -61,14 +58,6 @@ public class VivePawn : NetworkBehaviour
 
     private void ViveBridge_PadUnclicked(object sender, ClickedEventArgs e)
     {
-        Debug.Log("Spawn status is" + hasSpawnedInds);
-        if (hasSpawnedInds)
-        {
-            RpcSpawnPrimitive();
-            // Do not change mode if you have created a box
-            return;
-        }
-
         RpcChangeMode();
         RpcChangeRayColor();
     }
@@ -125,9 +114,8 @@ public class VivePawn : NetworkBehaviour
         if (isLocalPlayer)
         {
             var pointBoard = transform.Find("Text Board").gameObject;
-            pointBoard.SetActive(true);
+            pointBoard.SetActive(false);
         }
-
     }
 
     [ClientRpc]
@@ -171,7 +159,20 @@ public class VivePawn : NetworkBehaviour
         {
             case InteractionMode.SpawnPrimitives:
                 if (isLocalPlayer)
-                    viveManipulator.DeactivateTempPrimitive();
+                {
+                    Debug.Log("Inidactor #: " + primitiveManager.IndicatorCount);
+                    if (primitiveManager.IndicatorCount == 4 || primitiveManager.IndicatorCount == 8)
+                    {
+                        RpcSpawnPrimitive();
+                        // Do not change mode if you have created a box
+                        return;
+                    }
+                    else
+                    {
+                        RpcDisableDisplay();
+                        viveManipulator.DeactivateTempPrimitive();
+                    }
+                }
                 break;
         }
 
@@ -185,11 +186,7 @@ public class VivePawn : NetworkBehaviour
                 if (isLocalPlayer)
                 {
                     viveManipulator.ActivateTempPrimitive(ViveManipulator.MinimumPrimitiveDistance);
-                    if (!hasSpawnedInds)
-                    {
-                        hasSpawnedInds = true;
-                        EnablePointDisplay();
-                    }
+                    EnablePointDisplay();
                 }
                 break;
         }
