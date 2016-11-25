@@ -3,8 +3,6 @@ using Assets.New_Scripts;
 using UnityEngine;
 using UnityEngine.Networking;
 
-
-
 public class VivePawn : NetworkBehaviour
 {
     public ViveBridge ViveBridge;
@@ -64,91 +62,46 @@ public class VivePawn : NetworkBehaviour
 
     public void EnablePointDisplay()
     {
-        RpcEnableDisplay();
+        var pointBoard = transform.Find("Text Board").gameObject;
+        pointBoard.SetActive(true);
     }
 
     public void DisablePointDisplay()
     {
-        RpcDisableDisplay();
+        var pointBoard = transform.Find("Text Board").gameObject;
+        pointBoard.SetActive(false);
     }
 
-
-    //[ClientRpc]
-    //void RpcSpawnPointInfo()
-    //{
-    //    if (isLocalPlayer)
-    //    {
-    //        textBoardPrefab = (GameObject)Instantiate(
-    //                                        pointBoard,
-    //                                        new Vector3(0, 0, 0),
-    //                                        Quaternion.identity);
-
-    //        if (pointBoard != null)
-    //        {
-    //            Debug.Log("found board");
-    //            newText = textBoardPrefab.GetComponentInChildren(typeof(TextMesh)) as TextMesh;
-    //            newText.text = "0 points";
-
-    //        }
-
-
-            
-
-    //    }
-
-    //}
-
     [ClientRpc]
-    void RpcEnableDisplay()
+    void RpcAddPosition(GameObject primitive)
     {
-        if (isLocalPlayer)
+        primitiveManager.RegisterPrimitive(primitive, primitive.transform.position);
+        var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
+        cTextMesh.text = primitiveManager.IndicatorCount + " points";
+    }
+
+    void SpawnPrimitive()
+    {
+        Debug.Log("Number of points:" + primitiveManager.IndicatorCount);
+        GameObject newBox = BoxGenerator.CreateBox(primitiveManager.IndicatorPositions,
+            (Material) Resources.Load("Materials/ProceduralBoxMaterial"));
+
+        if (primitiveManager.IndicatorCount == 4)
         {
-            var pointBoard = transform.Find("Text Board").gameObject;
-            pointBoard.SetActive(true);
+            newBox.tag = "FourPointPrimitive";
         }
-    }
-
-    [ClientRpc]
-    void RpcDisableDisplay()
-    {
-        if (isLocalPlayer)
+        else if (primitiveManager.IndicatorCount == 8)
         {
-            var pointBoard = transform.Find("Text Board").gameObject;
-            pointBoard.SetActive(false);
+            newBox.tag = "EightPointPrimitive";
         }
-    }
 
-    [ClientRpc]
-    void RpcAddPosition()
-    {
-        var cTextMesh = GetComponentInChildren<TextMesh>();
-        cTextMesh.text = primitiveManager.IndicatorCount + "points";
-    }
+        newBox.AddComponent<PersistentObjectData>();
+        newBox.AddComponent<NetworkIdentity>();
 
-    [ClientRpc]
-    void RpcSpawnPrimitive()
-    {
-        if (isLocalPlayer)
-        {
-            Debug.Log("Number of points:" + primitiveManager.IndicatorCount);
-            GameObject newBox = BoxGenerator.CreateBox(primitiveManager.IndicatorPositions, (Material)Resources.Load("Materials/ProceduralBoxMaterial"));
+        primitiveManager.UnSpawn();
 
-            if (primitiveManager.IndicatorCount == 4)
-            {
-                newBox.tag = "FourPointPrimitive";
-            }
-            else if (primitiveManager.IndicatorCount == 8)
-            {
-                newBox.tag = "EightPointPrimitive";
-            }
-            newBox.AddComponent<PersistentObjectData>();
-            newBox.AddComponent<NetworkIdentity>();
-
-            primitiveManager.UnSpawn();
-
-            var cTextMesh = GetComponentInChildren<TextMesh>();
-            cTextMesh.text = "0 points";
-        }
+        var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
+        cTextMesh.text = "0 points";
     }
 
     [ClientRpc]
@@ -158,20 +111,21 @@ public class VivePawn : NetworkBehaviour
         switch (viveManipulator.InteractionMode)
         {
             case InteractionMode.SpawnPrimitives:
-                if (isLocalPlayer)
+                Debug.Log("Indicator #: " + primitiveManager.IndicatorCount);
+                if (primitiveManager.IndicatorCount != 4 && primitiveManager.IndicatorCount != 8)
                 {
-                    Debug.Log("Inidactor #: " + primitiveManager.IndicatorCount);
-                    if (primitiveManager.IndicatorCount == 4 || primitiveManager.IndicatorCount == 8)
+                    Debug.Log("Cannot spawn primitive with " + primitiveManager.IndicatorCount + " points");
+                    if (isLocalPlayer)
                     {
-                        RpcSpawnPrimitive();
-                        // Do not change mode if you have created a box
-                        return;
-                    }
-                    else
-                    {
-                        RpcDisableDisplay();
+                        DisablePointDisplay();
                         viveManipulator.DeactivateTempPrimitive();
                     }
+                }
+                else
+                {
+                    SpawnPrimitive();
+                    // Do not change mode if you have created a box
+                    return;
                 }
                 break;
         }
@@ -235,10 +189,8 @@ public class VivePawn : NetworkBehaviour
             case InteractionMode.SpawnPrimitives:
                 if (isLocalPlayer)
                 {
-                    var primitive = SpawnFactory.Spawn("Prefabs/Scene1/SphereMarker", CalculatePrimitivePosition(0.5f),
-                        transform.rotation);
-                    primitiveManager.RegisterPrimitive(primitive, primitive.transform.position);
-                    RpcAddPosition();
+                    var primitive = SpawnFactory.Spawn("Prefabs/Scene1/SphereMarker", CalculatePrimitivePosition(0.5f), transform.rotation);
+                    RpcAddPosition(primitive);
                 }
                 break;
         }
@@ -258,8 +210,6 @@ public class VivePawn : NetworkBehaviour
             return;
 
         viveManipulator.PrevPosition = transform.position;
-
-
 
         if (isServer)
         {
