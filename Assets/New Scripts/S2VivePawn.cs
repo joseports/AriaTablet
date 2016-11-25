@@ -351,7 +351,7 @@ public class S2VivePawn : NetworkBehaviour
         if (isLocalPlayer)
         {
             Debug.Log("Number of points:" + indPositions.Count);
-            GameObject newBox = BoxGenerator.CreateBox(indPositions, ProceduralBoxMaterial);
+            GameObject newBox = BoxGenerator.CreateBox(primitiveManager.IndicatorPositions, ProceduralBoxMaterial);
 
             if (indPositions.Count == 4)
             {

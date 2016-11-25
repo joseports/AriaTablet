@@ -27,6 +27,13 @@ namespace Assets.New_Scripts
             //passetId = NetworkHash128.Parse(assetStrng);
         }
 
+        public int IndicatorCount { get { return indPositions.Count; } }
+
+        public Vector3[] IndicatorPositions
+        {
+            get { return indPositions.ToArray(); }
+        }
+
         public void RegisterPrimitive(GameObject instance, Vector3 position)
         {
             indicatorSpawnPool.Add(instance);

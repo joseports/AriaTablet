@@ -10,16 +10,10 @@ public class VivePawn : NetworkBehaviour
     public ViveBridge ViveBridge;
     private GameObject rayMesh;
     private PrimitiveManager primitiveManager;
-
     private ViveManipulator viveManipulator;
 
     //JFG
     private bool hasSpawnedInds;
-
-    private List<Vector3> indPositions;
-    public Material ProceduralBoxMaterial;
-    private TextMesh newText;
-    private GameObject textBoardPrefab;
 
     // Use this for initialization
     void Start()
@@ -37,8 +31,6 @@ public class VivePawn : NetworkBehaviour
         ViveBridge.Ungripped += ViveBridge_Ungripped;
 
         primitiveManager = new PrimitiveManager();
-
-        indPositions = new List<Vector3>();
 
         ////CreatePointDisplay();
         //if (isLocalPlayer)
@@ -73,19 +65,12 @@ public class VivePawn : NetworkBehaviour
         if (hasSpawnedInds)
         {
             RpcSpawnPrimitive();
-            primitiveManager.UnSpawn();
-
             // Do not change mode if you have created a box
             return;
         }
 
         RpcChangeMode();
         RpcChangeRayColor();
-    }
-
-    public void AddIndicatorPosition(Vector3 pos)
-    {
-        RpcAddPosition(pos);
     }
 
     public void EnablePointDisplay()
@@ -98,10 +83,6 @@ public class VivePawn : NetworkBehaviour
         RpcDisableDisplay();
     }
 
-    public void UpdateDisplayPosition(Vector3 pos)
-    {
-        RpcUpdateDisplayPosition(pos);
-    }
 
     //[ClientRpc]
     //void RpcSpawnPointInfo()
@@ -148,48 +129,37 @@ public class VivePawn : NetworkBehaviour
         }
 
     }
-    [ClientRpc]
-    void RpcUpdateDisplayPosition(Vector3 newPos)
-    {
-        if (isLocalPlayer)
-        {
-            textBoardPrefab.transform.position = CalculatePrimitivePosition(0.7f);
-            
-        }
-            
-    }
-
 
     [ClientRpc]
-    void RpcAddPosition(Vector3 position)
+    void RpcAddPosition()
     {
-        indPositions.Add(position);
         var cTextMesh = GetComponentInChildren<TextMesh>();
-        cTextMesh.text = indPositions.Count + "points";
+        cTextMesh.text = primitiveManager.IndicatorCount + "points";
     }
 
     [ClientRpc]
     void RpcSpawnPrimitive()
     {
-
         if (isLocalPlayer)
         {
-            Debug.Log("Number of points:" + indPositions.Count);
-            GameObject newBox = BoxGenerator.CreateBox(indPositions, ProceduralBoxMaterial);
+            Debug.Log("Number of points:" + primitiveManager.IndicatorCount);
+            GameObject newBox = BoxGenerator.CreateBox(primitiveManager.IndicatorPositions, (Material)Resources.Load("Materials/ProceduralBoxMaterial"));
 
-            if (indPositions.Count == 4)
+            if (primitiveManager.IndicatorCount == 4)
             {
                 newBox.tag = "FourPointPrimitive";
             }
-            else if (indPositions.Count == 8)
+            else if (primitiveManager.IndicatorCount == 8)
             {
                 newBox.tag = "EightPointPrimitive";
             }
             newBox.AddComponent<PersistentObjectData>();
             newBox.AddComponent<NetworkIdentity>();
 
-            indPositions.Clear();
+            primitiveManager.UnSpawn();
 
+            var cTextMesh = GetComponentInChildren<TextMesh>();
+            cTextMesh.text = "0 points";
         }
     }
 
@@ -271,10 +241,8 @@ public class VivePawn : NetworkBehaviour
                     var primitive = SpawnFactory.Spawn("Prefabs/Scene1/SphereMarker", CalculatePrimitivePosition(0.5f),
                         transform.rotation);
                     primitiveManager.RegisterPrimitive(primitive, primitive.transform.position);
+                    RpcAddPosition();
                 }
-                AddIndicatorPosition(CalculatePrimitivePosition (0.5f));
-                
-
                 break;
         }
     }

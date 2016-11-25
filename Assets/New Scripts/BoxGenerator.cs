@@ -5,16 +5,12 @@ namespace Assets.New_Scripts
 {
     public static class BoxGenerator
     {
-        public static GameObject CreateBox(List<Vector3> inPoints, Material mat)
+        public static GameObject CreateBox(Vector3[] inPoints, Material mat)
         {
             var isSize = false;
 
-
             var isSorted = false;
-            List<Vector3> points;
-
-            SortInputPoints(inPoints, out points, out isSorted);
-
+            List<Vector3> points = SortInputPoints(inPoints, out isSorted);
 
             if (points.Count == 4)
                 isSize = true;
@@ -226,7 +222,7 @@ namespace Assets.New_Scripts
             return primGO;
         }
 
-        private static void SortInputPoints(List<Vector3> points, out List<Vector3> sortedPoints, out bool isSorted)
+        private static List<Vector3> SortInputPoints(Vector3[] points, out bool isSorted)
         {
             isSorted = false;
 
@@ -234,9 +230,9 @@ namespace Assets.New_Scripts
             var savedIndex1 = -1;
             var savedIndex2 = -1;
 
-            sortedPoints = new List<Vector3>();
+            var sortedPoints = new List<Vector3>();
 
-            if (points.Count == 8)
+            if (points.Length == 8)
             {
                 // sort on X
                 //float minX = points[1].x;
@@ -244,7 +240,7 @@ namespace Assets.New_Scripts
                 for (var i = 0; i < 4; i++)
                     tmpX1.Add(points[i].x);
                 var tmpX2 = new List<float>();
-                for (var j = 4; j < points.Count; j++)
+                for (var j = 4; j < points.Length; j++)
                     tmpX2.Add(points[j].x);
 
 
@@ -355,12 +351,12 @@ namespace Assets.New_Scripts
             if (sortedPoints.Count == 8)
                 isSorted = true;
 
-            if (points.Count == 4)
+            if (points.Length == 4)
             {
                 // sort on X
                 var minX = points[2].x;
                 var tmpX = new List<float>();
-                for (var i = 0; i < points.Count; i++)
+                for (var i = 0; i < points.Length; i++)
                     tmpX.Add(points[i].x);
 
                 tmpX.Sort();
@@ -369,7 +365,7 @@ namespace Assets.New_Scripts
                 var tmpPos = new List<Vector3>();
 
                 for (var i = 0; i < tmpX.Count; i++)
-                    for (var j = 0; j < points.Count; j++)
+                    for (var j = 0; j < points.Length; j++)
                         if (tmpX[i] == points[j].x)
                             if (j != savedIndex)
                             {
@@ -412,12 +408,12 @@ namespace Assets.New_Scripts
                 isSorted = true;
 
 
-            if (points.Count == 2)
+            if (points.Length == 2)
             {
                 // sort on X
                 var minX = points[1].x;
                 var tmpX = new List<float>();
-                for (var i = 0; i < points.Count; i++)
+                for (var i = 0; i < points.Length; i++)
                     tmpX.Add(points[i].x);
 
                 tmpX.Sort();
@@ -426,7 +422,7 @@ namespace Assets.New_Scripts
 
 
                 for (var i = 0; i < tmpX.Count; i++)
-                    for (var j = 0; j < points.Count; j++)
+                    for (var j = 0; j < points.Length; j++)
                         if (tmpX[i] == points[j].x)
                             if (j != savedIndex)
                             {
@@ -445,6 +441,7 @@ namespace Assets.New_Scripts
                     sortedPoints.Add(tmpPos[1]);
                 }
             }
+            return sortedPoints;
         }
 
         public static void CalculateVolume(List<Vector3> inPoints, int numPoints, bool hasBase, out float volume)
