@@ -86,32 +86,37 @@ namespace Assets.New_Scripts
             }
         }
 
-        public void ActivateTempPrimitive(GameObject vivePawn, float distance)
+        public void ActivateRay()
+        {
+            var ray = vivePawn.transform.Find(rayMesh).gameObject;
+            ray.GetComponent<MeshRenderer>().enabled = true;
+        }
+
+        public void ActivateTempPrimitive(float distance)
         {
             var sphere = vivePawn.transform.Find(raySphereMesh).gameObject;
             sphere.transform.localPosition = new Vector3(0, 0, distance);
             sphere.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
             var sphereRenderer = sphere.GetComponent<MeshRenderer>();
             sphereRenderer.enabled = true;
-            var ray = vivePawn.transform.Find(rayMesh).gameObject;
-            ray.GetComponent<MeshRenderer>().enabled = false;
 
             var pointBoard = vivePawn.transform.Find("Text Board").gameObject;
             pointBoard.SetActive(true);
         }
 
-        public void DeactivateTempPrimitive(GameObject vivePawn)
+        public void DeactivateRay()
         {
             var ray = vivePawn.transform.Find(rayMesh).gameObject;
-            ray.GetComponent<MeshRenderer>().enabled = true;
-            var sphere = vivePawn.transform.Find(raySphereMesh).gameObject;
-            sphere.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
+            ray.GetComponent<MeshRenderer>().enabled = false;
+        }
 
+        public void DeactivateTempPrimitive()
+        {
             var pointBoard = vivePawn.transform.Find("Text Board").gameObject;
             pointBoard.SetActive(false);
         }
 
-        public void ChangeColor(GameObject vivePawn)
+        public void ChangeColor()
         {
             Color newColor = Color.black;
             switch (InteractionMode)
@@ -153,13 +158,7 @@ namespace Assets.New_Scripts
                 return;
 
             var deltaP = CurrentPosition - PrevPosition;
-            Debug.Log("delta: " + deltaP);
-
-            if (deltaP.magnitude >= 10)
-            {
-                CurrentPosition = vivePawn.transform.position;
-                return;
-            }
+            Debug.Log("Cur: "+ CurrentPosition + "Prev: " + PrevPosition + "delta: " + deltaP);
 
             quadrantWorld = QuadrantFromVector(new Vector3(0, 0, 1));
             quadrantObject = QuadrantFromVector(vivePawn.transform.forward.normalized);
@@ -171,7 +170,6 @@ namespace Assets.New_Scripts
 
                     switch (quadrantObject)
                     {
-
                         case 1:
                             ManipulatedObject.transform.localScale += new Vector3(deltaP.x, deltaP.y, -deltaP.z) / scaleFactor;
                             break;

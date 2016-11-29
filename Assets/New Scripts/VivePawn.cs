@@ -1,9 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Reflection;
-using Assets.New_Scripts;
+﻿using Assets.New_Scripts;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.UI;
 
 public class VivePawn : NetworkBehaviour
 {
@@ -11,8 +8,6 @@ public class VivePawn : NetworkBehaviour
     private GameObject rayMesh;
     private PrimitiveManager primitiveManager;
     private ViveManipulator viveManipulator;
-
-    private InteractionMode interactionMode;
 
     // Use this for initialization
     void Start()
@@ -59,12 +54,6 @@ public class VivePawn : NetworkBehaviour
         cTextMesh.text = primitiveManager.IndicatorCount + " points";
     }
 
-    [ClientRpc]
-    void RpcSpawnPrimitive()
-    {
-        SpawnPrimitive();
-    }
-
     void SpawnPrimitive()
     {
         Debug.Log("Number of points:" + primitiveManager.IndicatorCount);
@@ -109,37 +98,30 @@ public class VivePawn : NetworkBehaviour
                 }
 
                 if (isLocalPlayer)
-                    viveManipulator.DeactivateTempPrimitive(gameObject);
+                {
+                    viveManipulator.ActivateRay();
+                    viveManipulator.DeactivateTempPrimitive();
+                }
 
                 break;
+
         }
 
         // this actually changes the mode
         viveManipulator.ChangeMode();
-        viveManipulator.ChangeColor(gameObject);
+        viveManipulator.ChangeColor();
 
         // this gets execute *after* changing the mode
         switch (viveManipulator.InteractionMode)
         {
             case InteractionMode.SpawnPrimitives:
                 if (isLocalPlayer)
-                    viveManipulator.ActivateTempPrimitive(gameObject, ViveManipulator.MinimumPrimitiveDistance);
+                {
+                    viveManipulator.DeactivateRay();
+                    viveManipulator.ActivateTempPrimitive(ViveManipulator.MinimumPrimitiveDistance);
+                }
                 break;
         }
-    }
-
-    [ClientRpc]
-    private void RpcActivateTempPrimitive()
-    {
-        Debug.Log("Activating Primitive");
-        viveManipulator.ActivateTempPrimitive(gameObject, ViveManipulator.MinimumPrimitiveDistance);
-    }
-
-    [ClientRpc]
-    private void RpcDeactivateTempPrimitive()
-    {
-        Debug.Log("Deactivating Primitive");
-        viveManipulator.DeactivateTempPrimitive(gameObject);
     }
 
     [ClientRpc]
@@ -148,14 +130,16 @@ public class VivePawn : NetworkBehaviour
         if (!isLocalPlayer)
             return;
         viveManipulator.CaptureCollided();
+        switch (viveManipulator.InteractionMode)
+        {
+            case InteractionMode.ScalePrefabs:
+                viveManipulator.DeactivateRay();
+                break;
+        }
     }
 
     private void ViveBridge_TriggerClicked(object sender, ClickedEventArgs e)
     {
-        if (!isLocalPlayer)
-            return;
-        Debug.Log("TriggerClicked");
-
         //Debug.Log("ray hit:" + viveManipulator.RayHitPoint());
         switch (viveManipulator.InteractionMode)
         {
@@ -169,11 +153,8 @@ public class VivePawn : NetworkBehaviour
         }
     }
 
-
     private void ViveBridge_TriggerUnclicked(object sender, ClickedEventArgs e)
     {
-        Debug.Log("TriggerUnclicked");
-
         switch (viveManipulator.InteractionMode)
         {
             case InteractionMode.ScalePrefabs:
@@ -210,7 +191,8 @@ public class VivePawn : NetworkBehaviour
         if (!isLocalPlayer)
             return;
 
-        viveManipulator.PrevPosition = transform.position;
+        viveManipulator.PrevPosition = viveManipulator.CurrentPosition;
+        viveManipulator.CurrentPosition = transform.position;
 
         if (isServer)
         {
@@ -226,17 +208,16 @@ public class VivePawn : NetworkBehaviour
         }
         rayMesh.transform.rotation = transform.rotation;
 
-        viveManipulator.CurrentPosition = transform.position;
-
-        //textBoardPrefab.transform.position = CalculatePrimitivePosition(0.7f);
         CheckHits();
 
         switch (viveManipulator.InteractionMode)
         {
             case InteractionMode.ScalePrefabs:
-                RpcScaleObject();
+                viveManipulator.ScaleObject();
                 break;
         }
+
+        
     }
 
     void CheckHits()
@@ -262,20 +243,19 @@ public class VivePawn : NetworkBehaviour
         if (!isLocalPlayer)
             return;
         viveManipulator.ReleaseObject();
+
+        switch (viveManipulator.InteractionMode)
+        {
+            case InteractionMode.ScalePrefabs:
+                viveManipulator.ActivateRay();
+                break;
+        }
     }
 
     [ClientRpc]
     private void RpcChangeMode()
     {
         ChangeMode();
-    }
-
-    //[ClientRpc]
-    void RpcScaleObject()
-    {
-        if (!isLocalPlayer)
-            return;
-        viveManipulator.ScaleObject();
     }
 
     public override void OnStartLocalPlayer()
