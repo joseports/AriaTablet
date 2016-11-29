@@ -26,7 +26,7 @@ namespace Assets.New_Scripts
         public GameObject ManipulatedObject { get; set; }
         public InteractionMode InteractionMode { get; set; }
 
-        public bool IsManipulating { get; private set; }
+        public bool IsManipulating { get; set; }
         public bool IsScaling { get; private set; }
 
         public ViveManipulator(GameObject vivePawn)
@@ -84,11 +84,9 @@ namespace Assets.New_Scripts
                     InteractionMode = InteractionMode.Manipulation;
                     break;
             }
-
-            Debug.Log("InteractionMode: " + InteractionMode);
         }
 
-        public void ActivateTempPrimitive(float distance)
+        public void ActivateTempPrimitive(GameObject vivePawn, float distance)
         {
             var sphere = vivePawn.transform.Find(raySphereMesh).gameObject;
             sphere.transform.localPosition = new Vector3(0, 0, distance);
@@ -97,18 +95,23 @@ namespace Assets.New_Scripts
             sphereRenderer.enabled = true;
             var ray = vivePawn.transform.Find(rayMesh).gameObject;
             ray.GetComponent<MeshRenderer>().enabled = false;
+
+            var pointBoard = vivePawn.transform.Find("Text Board").gameObject;
+            pointBoard.SetActive(true);
         }
 
-        public void DeactivateTempPrimitive()
+        public void DeactivateTempPrimitive(GameObject vivePawn)
         {
             var ray = vivePawn.transform.Find(rayMesh).gameObject;
             ray.GetComponent<MeshRenderer>().enabled = true;
             var sphere = vivePawn.transform.Find(raySphereMesh).gameObject;
             sphere.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
 
+            var pointBoard = vivePawn.transform.Find("Text Board").gameObject;
+            pointBoard.SetActive(false);
         }
 
-        public void ChangeColor()
+        public void ChangeColor(GameObject vivePawn)
         {
             Color newColor = Color.black;
             switch (InteractionMode)
@@ -348,6 +351,17 @@ namespace Assets.New_Scripts
         void RestoreColor(GameObject gameObject)
         {
             gameObject.GetComponent<MeshRenderer>().material.color = originalMaterialColor;
+        }
+
+        public void EnablePointDisplay()
+        {
+            
+        }
+
+        public void DisablePointDisplay()
+        {
+            var pointBoard = vivePawn.transform.Find("Text Board").gameObject;
+            pointBoard.SetActive(false);
         }
     }
 }

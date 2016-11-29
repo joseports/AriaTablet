@@ -34,11 +34,15 @@ namespace Assets.New_Scripts
             get { return indPositions.ToArray(); }
         }
 
-        public void RegisterPrimitive(GameObject instance, Vector3 position)
+        public void RegisterPrimitive(GameObject instance)
         {
             indicatorSpawnPool.Add(instance);
-            indPositions.Add(position);
             currIndicatorCount++;
+        }
+
+        public void RegisterPosition(Vector3 position)
+        {
+            indPositions.Add(position);
         }
 
         public void UnSpawn()
@@ -50,6 +54,11 @@ namespace Assets.New_Scripts
                 currIndicatorCount--;
             }
 
+            ClearIndicatorArrays();
+        }
+
+        public void ClearIndicatorArrays()
+        {
             indPositions.Clear();
             indicatorSpawnPool.Clear();
         }

@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Reflection;
 using Assets.New_Scripts;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.UI;
 
 public class VivePawn : NetworkBehaviour
 {
@@ -10,13 +12,13 @@ public class VivePawn : NetworkBehaviour
     private PrimitiveManager primitiveManager;
     private ViveManipulator viveManipulator;
 
+    private InteractionMode interactionMode;
+
     // Use this for initialization
     void Start()
     {
         ViveBridge = GameObject.Find("ViveBridge").GetComponent<ViveBridge>();
-
         viveManipulator = new ViveManipulator(gameObject);
-
         rayMesh = GetComponentInChildren<MeshRenderer>().transform.parent.gameObject;
 
         Debug.Log("IsServer: " + isServer);
@@ -26,19 +28,6 @@ public class VivePawn : NetworkBehaviour
         ViveBridge.Ungripped += ViveBridge_Ungripped;
 
         primitiveManager = new PrimitiveManager();
-
-        ////CreatePointDisplay();
-        //if (isLocalPlayer)
-        //{
-        //    //textBoardPrefab = (GameObject)Instantiate(
-
-        //    textBoardPrefab = SpawnFactory.Spawn("Prefabs/Scene1/Text Board", new Vector3(0, 0, 0), Quaternion.identity);
-        //    Debug.Log("found board");
-        //    newText = textBoardPrefab.GetComponentInChildren<TextMesh>();
-        //    newText.text = "0 points";
-        //    textBoardPrefab.SetActive(false);
-        //}
-
 
     }
 
@@ -56,28 +45,24 @@ public class VivePawn : NetworkBehaviour
 
     private void ViveBridge_PadUnclicked(object sender, ClickedEventArgs e)
     {
-        RpcChangeMode();
-        RpcChangeRayColor();
-    }
-
-    public void EnablePointDisplay()
-    {
-        var pointBoard = transform.Find("Text Board").gameObject;
-        pointBoard.SetActive(true);
-    }
-
-    public void DisablePointDisplay()
-    {
-        var pointBoard = transform.Find("Text Board").gameObject;
-        pointBoard.SetActive(false);
+        if (isLocalPlayer)
+            ChangeMode();
+        else
+            RpcChangeMode();
     }
 
     [ClientRpc]
-    void RpcAddPosition(GameObject primitive)
+    void RpcAddPosition(Vector3 position)
     {
-        primitiveManager.RegisterPrimitive(primitive, primitive.transform.position);
+        primitiveManager.RegisterPosition(position);
         var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
         cTextMesh.text = primitiveManager.IndicatorCount + " points";
+    }
+
+    [ClientRpc]
+    void RpcSpawnPrimitive()
+    {
+        SpawnPrimitive();
     }
 
     void SpawnPrimitive()
@@ -99,51 +84,62 @@ public class VivePawn : NetworkBehaviour
         newBox.AddComponent<NetworkIdentity>();
 
         primitiveManager.UnSpawn();
+        
 
         var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
         cTextMesh.text = "0 points";
     }
 
-    [ClientRpc]
-    private void RpcChangeMode()
+    private void ChangeMode()
     {
         // this gets executed *before* leaving the current mode
         switch (viveManipulator.InteractionMode)
         {
             case InteractionMode.SpawnPrimitives:
                 Debug.Log("Indicator #: " + primitiveManager.IndicatorCount);
-                if (primitiveManager.IndicatorCount != 4 && primitiveManager.IndicatorCount != 8)
+                if (primitiveManager.IndicatorCount == 4 || primitiveManager.IndicatorCount == 8)
                 {
-                    Debug.Log("Cannot spawn primitive with " + primitiveManager.IndicatorCount + " points");
                     if (isLocalPlayer)
-                    {
-                        DisablePointDisplay();
-                        viveManipulator.DeactivateTempPrimitive();
-                    }
-                }
-                else
-                {
-                    SpawnPrimitive();
+                        SpawnPrimitive();
+                    else
+                        primitiveManager.ClearIndicatorArrays();
+
                     // Do not change mode if you have created a box
                     return;
                 }
+
+                if (isLocalPlayer)
+                    viveManipulator.DeactivateTempPrimitive(gameObject);
+
                 break;
         }
 
         // this actually changes the mode
         viveManipulator.ChangeMode();
+        viveManipulator.ChangeColor(gameObject);
 
         // this gets execute *after* changing the mode
         switch (viveManipulator.InteractionMode)
         {
             case InteractionMode.SpawnPrimitives:
                 if (isLocalPlayer)
-                {
-                    viveManipulator.ActivateTempPrimitive(ViveManipulator.MinimumPrimitiveDistance);
-                    EnablePointDisplay();
-                }
+                    viveManipulator.ActivateTempPrimitive(gameObject, ViveManipulator.MinimumPrimitiveDistance);
                 break;
         }
+    }
+
+    [ClientRpc]
+    private void RpcActivateTempPrimitive()
+    {
+        Debug.Log("Activating Primitive");
+        viveManipulator.ActivateTempPrimitive(gameObject, ViveManipulator.MinimumPrimitiveDistance);
+    }
+
+    [ClientRpc]
+    private void RpcDeactivateTempPrimitive()
+    {
+        Debug.Log("Deactivating Primitive");
+        viveManipulator.DeactivateTempPrimitive(gameObject);
     }
 
     [ClientRpc]
@@ -156,8 +152,9 @@ public class VivePawn : NetworkBehaviour
 
     private void ViveBridge_TriggerClicked(object sender, ClickedEventArgs e)
     {
+        if (!isLocalPlayer)
+            return;
         Debug.Log("TriggerClicked");
-
 
         //Debug.Log("ray hit:" + viveManipulator.RayHitPoint());
         switch (viveManipulator.InteractionMode)
@@ -182,15 +179,19 @@ public class VivePawn : NetworkBehaviour
             case InteractionMode.ScalePrefabs:
             case InteractionMode.Manipulation:
                 RpcReleaseObject();
-               
-                DisablePointDisplay();
                 break;
 
             case InteractionMode.SpawnPrimitives:
                 if (isLocalPlayer)
                 {
-                    var primitive = SpawnFactory.Spawn("Prefabs/Scene1/SphereMarker", CalculatePrimitivePosition(0.5f), transform.rotation);
-                    RpcAddPosition(primitive);
+                    var primitive = SpawnFactory.Spawn("Prefabs/Scene1/SphereMarker", CalculatePrimitivePosition(0.5f),
+                        transform.rotation);
+                    primitiveManager.RegisterPrimitive(primitive);
+                    primitiveManager.RegisterPosition(primitive.transform.position);
+                }
+                else
+                {
+                    RpcAddPosition(CalculatePrimitivePosition(0.5f));
                 }
                 break;
         }
@@ -264,9 +265,9 @@ public class VivePawn : NetworkBehaviour
     }
 
     [ClientRpc]
-    void RpcChangeRayColor()
+    private void RpcChangeMode()
     {
-        viveManipulator.ChangeColor();
+        ChangeMode();
     }
 
     //[ClientRpc]
@@ -283,8 +284,7 @@ public class VivePawn : NetworkBehaviour
 
         if (!isLocalPlayer)
             return;
-        name = "LocalClient";
-        Debug.Log("Start: " + name);
+        
         var meshRenderers = GetComponentsInChildren<MeshRenderer>();
         foreach (var meshRenderer in meshRenderers)
         {
@@ -293,6 +293,12 @@ public class VivePawn : NetworkBehaviour
         }
 
         GetComponentInChildren<Camera>().enabled = true;
+    }
+
+    public override void OnStartServer()
+    {
+        name = "Server";
+        Debug.Log("Start: " + name);
     }
 
     [ClientRpc]
