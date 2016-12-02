@@ -79,6 +79,7 @@
     <Compile Include="Assets\New Scripts\DebugGUI.cs" />
     <Compile Include="Assets\New Scripts\EventManager.cs" />
     <Compile Include="Assets\New Scripts\HiddenTextTask.cs" />
+    <Compile Include="Assets\New Scripts\HmdVivePawn.cs" />
     <Compile Include="Assets\New Scripts\InstanceID.cs" />
     <Compile Include="Assets\New Scripts\InteractionMode.cs" />
     <Compile Include="Assets\New Scripts\SceneId.cs" />

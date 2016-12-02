@@ -5,6 +5,7 @@ namespace Assets.New_Scripts
     public class ViveManipulator
     {
         public const float MinimumPrimitiveDistance = 0.5f;
+        public const float HmdMinimumPrimitiveDistance = 0.05f;
         public const float SmoothStep = 5f;
         private const string rayMesh = "ray";
         private const string raySphereMesh = "raySphere";
@@ -143,7 +144,7 @@ namespace Assets.New_Scripts
 
             foreach (var meshRender in vivePawn.GetComponentsInChildren<MeshRenderer>())
             {
-                if (meshRender.gameObject.GetComponent<TextMesh>() != null)
+                if (!string.Equals(meshRender.gameObject.tag, "InteractionIndicator"))
                     return;
                 meshRender.material.color = newColor;
             }
@@ -221,8 +222,6 @@ namespace Assets.New_Scripts
                     }
                     break;
 
-
-
                 case 4:
                     switch (quadrantObject)
                     {
@@ -240,8 +239,6 @@ namespace Assets.New_Scripts
                             break;
                     }
                     break;
-
-
             }
 
             Debug.Log("Manipulating:" + lastCollided.name);
@@ -278,7 +275,6 @@ namespace Assets.New_Scripts
             return finalAngle;
         }
 
-
         public void CheckHits(Vector3 controllerPosition, Vector3 controllerForward, bool isServer = true)
         {
             if (InteractionMode == InteractionMode.SpawnPrimitives || IsManipulating || IsScaling)
@@ -287,10 +283,13 @@ namespace Assets.New_Scripts
             RaycastHit hitInfo;
             var sphere = vivePawn.transform.Find(raySphereMesh).gameObject;
 
-            if (Physics.Raycast(new Ray(controllerPosition, controllerForward), out hitInfo))
+            if (Physics.Raycast(new Ray(controllerPosition, controllerForward), out hitInfo) &&
+                string.Equals(hitInfo.transform.gameObject.tag, "Manipulable"))
             {
-                if (hitInfo.transform.gameObject != lastCollided)
+                var collidedObject = hitInfo.transform.gameObject;
+                if (collidedObject != lastCollided)
                 {
+
                     if (lastCollided != null)
                         RestoreColor(lastCollided);
                     prevCollided = lastCollided;
@@ -300,15 +299,6 @@ namespace Assets.New_Scripts
                     originalMaterialColor = renderer.material.color;
                     renderer.material.color = Colors.TransparentGreen;
                 }
-                var newPosition = new Vector3(0, 0, (hitInfo.point - controllerPosition).magnitude);
-
-                //for indicators
-                hitPoint = hitInfo.point;
-
-                sphere.transform.localPosition = isServer ? newPosition : Vector3.Lerp(sphere.transform.localPosition,newPosition,Time.deltaTime*SmoothStep);
-
-                sphere.GetComponent<MeshRenderer>().enabled = true;
-                
             }
             else
             {
@@ -318,12 +308,19 @@ namespace Assets.New_Scripts
                 if (lastCollided != null)
                 {
                     prevCollided = lastCollided;
+
                     RestoreColor(lastCollided);
                     lastCollided = null;
                 }
                 sphere.GetComponent<MeshRenderer>().enabled = false;
-                    
             }
+
+            var newPosition = new Vector3(0, 0, (hitInfo.point - controllerPosition).magnitude);
+            newPosition.z -= sphere.transform.localScale.z;
+            //for indicators
+            hitPoint = hitInfo.point;
+            sphere.transform.localPosition = isServer ? newPosition : Vector3.Lerp(sphere.transform.localPosition, newPosition, Time.deltaTime * SmoothStep);
+            sphere.GetComponent<MeshRenderer>().enabled = true;
         }
 
         public void CaptureCollided()
@@ -351,15 +348,5 @@ namespace Assets.New_Scripts
             gameObject.GetComponent<MeshRenderer>().material.color = originalMaterialColor;
         }
 
-        public void EnablePointDisplay()
-        {
-            
-        }
-
-        public void DisablePointDisplay()
-        {
-            var pointBoard = vivePawn.transform.Find("Text Board").gameObject;
-            pointBoard.SetActive(false);
-        }
     }
 }

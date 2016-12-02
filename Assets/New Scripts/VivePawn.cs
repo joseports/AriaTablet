@@ -1,9 +1,6 @@
 ﻿using Assets.New_Scripts;
 using UnityEngine;
 using UnityEngine.Networking;
-using System.Collections.Generic;
-
-using UnityEngine.Events;
 
 public partial class VivePawn : NetworkBehaviour
 {
@@ -50,9 +47,6 @@ public partial class VivePawn : NetworkBehaviour
             RpcChangeMode();
     }
 
-
-
-   
     [ClientRpc]
     void RpcAddPosition(Vector3 position)
     {
@@ -172,23 +166,23 @@ public partial class VivePawn : NetworkBehaviour
             case InteractionMode.SpawnPrimitives:
                 if (isLocalPlayer)
                 {
-                    var primitive = SpawnFactory.Spawn("Prefabs/Scene1/SphereMarker", CalculatePrimitivePosition(0.5f),
-                        transform.rotation);
+                    var primitive = SpawnFactory.Spawn("Prefabs/Scene1/SphereMarker",
+                        CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position,
+                            transform.forward), transform.rotation);
                     primitiveManager.RegisterPrimitive(primitive);
                     primitiveManager.RegisterPosition(primitive.transform.position);
                 }
                 else
                 {
-                    RpcAddPosition(CalculatePrimitivePosition(0.5f));
+                    RpcAddPosition(CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position, transform.forward));
                 }
                 break;
         }
     }
 
-    // if it is 0.5 modify
-    Vector3 CalculatePrimitivePosition(float distance)
+    public static Vector3 CalculatePrimitivePosition(float distance, Vector3 position, Vector3 forward)
     {
-        Ray r = new Ray(transform.position, transform.forward);
+        Ray r = new Ray(position, forward);
         return r.GetPoint(distance);
     }
 

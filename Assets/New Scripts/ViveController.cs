@@ -9,8 +9,6 @@ public class ViveController : MonoBehaviour
     public ViveBridge ViveBridge;
     private SteamVR_TrackedController controller;
 
-
-
     // Use this for initialization
     void Start ()
 	{
