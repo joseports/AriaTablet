@@ -13,11 +13,13 @@
     <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>Unity Subset v3.5</TargetFrameworkProfile>
-    <CompilerResponseFile></CompilerResponseFile>
+    <CompilerResponseFile>
+    </CompilerResponseFile>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows:5</UnityBuildTarget>
     <UnityVersion>5.3.6f1</UnityVersion>
-    <RootNamespace></RootNamespace>
+    <RootNamespace>
+    </RootNamespace>
     <LangVersion Condition=" '$(VisualStudioVersion)' != '10.0' ">4</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -79,6 +81,8 @@
     <Compile Include="Assets\New Scripts\HiddenTextTask.cs" />
     <Compile Include="Assets\New Scripts\InstanceID.cs" />
     <Compile Include="Assets\New Scripts\InteractionMode.cs" />
+    <Compile Include="Assets\New Scripts\SceneId.cs" />
+    <Compile Include="Assets\New Scripts\TabletMenuHandler.cs" />
     <Compile Include="Assets\New Scripts\PersistentObjectData.cs" />
     <Compile Include="Assets\New Scripts\PrimitiveManager.cs" />
     <Compile Include="Assets\New Scripts\SceneChanger.cs" />
@@ -123,6 +127,10 @@
     <Compile Include="Assets\SteamVR\Scripts\SteamVR_TrackedObject.cs" />
     <Compile Include="Assets\SteamVR\Scripts\SteamVR_UpdatePoses.cs" />
     <Compile Include="Assets\SteamVR\Scripts\SteamVR_Utils.cs" />
+    <Compile Include="Assets\Victorian_Interiors\Bin for Parts\Doors\Door Components\Deactivate.cs" />
+    <Compile Include="Assets\Victorian_Interiors\Bin for Parts\Doors\Door Components\DoorActivator.cs" />
+    <Compile Include="Assets\Victorian_Interiors\Prefab Rooms\Scripts\RoomToggle.cs" />
+    <Compile Include="Assets\Victorian_Interiors\Prefab Rooms\Scripts\StartingRoom.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\SteamVR\Resources\SteamVR_AlphaOut.shader" />

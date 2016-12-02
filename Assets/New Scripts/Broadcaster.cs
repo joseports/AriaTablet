@@ -94,7 +94,7 @@ public class Broadcaster : MonoBehaviour {
 
         miniDisplay.transform.LookAt(viveCamera.transform.position, Vector3.up);
         miniDisplay.transform.rotation *= Quaternion.AngleAxis(180, Vector3.up);
-        miniDisplay.transform.localPosition= new Vector3(-0.2f, 0, 0);
+        miniDisplay.transform.localPosition = new Vector3(-0.2f, 0, 0);
     }
 
     public void StopCamera()
