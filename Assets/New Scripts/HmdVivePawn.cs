@@ -20,11 +20,20 @@ namespace Assets.New_Scripts
             viveRightController.PadUnclicked += ViveRightController_PadUnclicked;
             viveRightController.TriggerUnclicked += ViveRightController_TriggerUnclicked;
             viveRightController.TriggerClicked += ViveRightController_TriggerClicked;
+            viveRightController.Ungripped += ViveRightController_Ungripped;
             viveManipulator = new ViveManipulator(gameObject);
             primitiveManager = new PrimitiveManager();
 
             // Set Initial mode to Manipulation
             viveManipulator.InteractionMode = InteractionMode.Manipulation;
+        }
+
+        private void ViveRightController_Ungripped(object sender, ClickedEventArgs clickedEventArgs)
+        {
+            primitiveManager.UndoSpawns();
+
+            var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
+            cTextMesh.text = primitiveManager.IndicatorCount + " points";
         }
 
         private void ViveRightController_TriggerClicked(object sender, ClickedEventArgs e)
@@ -63,11 +72,12 @@ namespace Assets.New_Scripts
                     Debug.Log("Indicator #: " + primitiveManager.IndicatorCount);
                     if (primitiveManager.IndicatorCount == 4 || primitiveManager.IndicatorCount == 8)
                     {
-                        // todo
+                        primitiveManager.SpawnBox();
+
                         // Do not change mode if you have created a box
                         return;
                     }
-                        viveManipulator.ActivateRay();
+                    viveManipulator.ActivateRay();
                         viveManipulator.DeactivateTempPrimitive();
                     break;
             }
@@ -104,10 +114,13 @@ namespace Assets.New_Scripts
 
                 case InteractionMode.SpawnPrimitives:
                     var primitive = SpawnFactory.Spawn("Prefabs/Scene1/SphereMarker",
-                        VivePawn.CalculatePrimitivePosition(ViveManipulator.HmdMinimumPrimitiveDistance, transform.position, transform.forward),
-                        transform.rotation, false);
-                        primitiveManager.RegisterPrimitive(primitive);
-                        primitiveManager.RegisterPosition(primitive.transform.position);
+                        VivePawn.CalculatePrimitivePosition(ViveManipulator.HmdMinimumPrimitiveDistance,
+                            transform.position, transform.forward),transform.rotation, false);
+                    primitiveManager.RegisterPrimitive(primitive);
+                    primitiveManager.RegisterPosition(primitive.transform.position);
+
+                    var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
+                    cTextMesh.text = primitiveManager.IndicatorCount + " points";
                     break;
             }
         }

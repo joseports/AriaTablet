@@ -9,7 +9,6 @@ public partial class VivePawn : NetworkBehaviour
     private PrimitiveManager primitiveManager;
     private ViveManipulator viveManipulator;
     public TabletMenuHandler tabletManager;
-
    
     // Use this for initialization
     void Start()
@@ -35,10 +34,10 @@ public partial class VivePawn : NetworkBehaviour
             return;
 
         Debug.Log("Ungripped");
-        //SpawnFactory.Spawn("Prefabs/TestPrefab", Vector3.zero, Quaternion.identity);
-
         primitiveManager.UndoSpawns();
 
+        var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
+        cTextMesh.text = primitiveManager.IndicatorCount + " points";
     }
 
     private void ViveBridge_PadUnclicked(object sender, ClickedEventArgs e)
@@ -57,31 +56,6 @@ public partial class VivePawn : NetworkBehaviour
         cTextMesh.text = primitiveManager.IndicatorCount + " points";
     }
 
-    void SpawnPrimitive()
-    {
-        Debug.Log("Number of points:" + primitiveManager.IndicatorCount);
-        GameObject newBox = BoxGenerator.CreateBox(primitiveManager.IndicatorPositions,
-            (Material) Resources.Load("Materials/ProceduralBoxMaterial"));
-
-        if (primitiveManager.IndicatorCount == 4)
-        {
-            newBox.tag = "FourPointPrimitive";
-        }
-        else if (primitiveManager.IndicatorCount == 8)
-        {
-            newBox.tag = "EightPointPrimitive";
-        }
-
-        newBox.AddComponent<PersistentObjectData>();
-        newBox.AddComponent<NetworkIdentity>();
-
-        primitiveManager.UnSpawn();
-        
-
-        var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
-        cTextMesh.text = "0 points";
-    }
-
     private void ChangeMode()
     {
         // this gets executed *before* leaving the current mode
@@ -92,7 +66,7 @@ public partial class VivePawn : NetworkBehaviour
                 if (primitiveManager.IndicatorCount == 4 || primitiveManager.IndicatorCount == 8)
                 {
                     if (isLocalPlayer)
-                        SpawnPrimitive();
+                        primitiveManager.SpawnBox();
                     else
                         primitiveManager.ClearIndicatorArrays();
 

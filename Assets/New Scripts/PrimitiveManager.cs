@@ -14,7 +14,6 @@ namespace Assets.New_Scripts
         private readonly List<GameObject> proceduralBoxes;
         //public static NetworkHash128 passetId { get; set; }
         private string assetStrng = "0176acd452adc180";
-        private int currIndicatorCount;
         private int m_ObjectPoolSize = 8;
         private Material mat;
         private readonly NetworkHash128 passetId;
@@ -37,7 +36,6 @@ namespace Assets.New_Scripts
         public void RegisterPrimitive(GameObject instance)
         {
             indicatorSpawnPool.Add(instance);
-            currIndicatorCount++;
         }
 
         public void RegisterPosition(Vector3 position)
@@ -45,13 +43,36 @@ namespace Assets.New_Scripts
             indPositions.Add(position);
         }
 
+        public void SpawnBox()
+        {
+            Debug.Log("Number of points:" + IndicatorCount);
+            GameObject newBox = BoxGenerator.CreateBox(IndicatorPositions,
+                (Material)Resources.Load("Materials/ProceduralBoxMaterial"));
+
+            if (IndicatorCount == 4)
+            {
+                newBox.tag = "FourPointPrimitive";
+            }
+            else if (IndicatorCount == 8)
+            {
+                newBox.tag = "EightPointPrimitive";
+            }
+
+            newBox.AddComponent<PersistentObjectData>();
+            newBox.AddComponent<NetworkIdentity>();
+
+            UnSpawn();
+
+            // Update number of points
+            var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
+            cTextMesh.text = "0 points";
+        }
+
         public void UnSpawn()
         {
             for (var i = 0; i < indicatorSpawnPool.Count; i++)
             {
                 NetworkServer.Destroy(indicatorSpawnPool[i]);
-
-                currIndicatorCount--;
             }
 
             ClearIndicatorArrays();
@@ -65,16 +86,13 @@ namespace Assets.New_Scripts
 
         public void UndoSpawns()
         {
-
             if (indicatorSpawnPool.Count > 0)
             {
-                NetworkServer.Destroy(indicatorSpawnPool[indicatorSpawnPool.Count - 1].gameObject);
-                indicatorSpawnPool.RemoveAt(indicatorSpawnPool.Count - 1);
-                currIndicatorCount--;
+                int indicatorToRemove = IndicatorCount - 1;
+                NetworkServer.Destroy(indicatorSpawnPool[indicatorToRemove].gameObject);
+                indicatorSpawnPool.RemoveAt(indicatorToRemove);
+                indPositions.RemoveAt(indicatorToRemove);
             }
         }
-
-
-
     }
 }
