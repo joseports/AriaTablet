@@ -24,6 +24,9 @@ namespace Assets.New_Scripts
 
         public static List<GameObject> loadedPrefabs;
         public List<GameObject> lstPrefabs;
+
+        public List<String> lstPrefabsPaths;
+
         private bool populatePrefabList = false;
 
         public NetworkHash128 assetId { get; set; }
@@ -51,7 +54,7 @@ namespace Assets.New_Scripts
         {
 
             if (currScene == SceneId.Scene2)
-                EventManager.StartListening("SelectOption1", buttonPressListener);
+            EventManager.StartListening("SelectOption1", buttonPressListener);
             EventManager.StartListening("SelectOption2", SetOption2);
             EventManager.StartListening("SelectOption3", SetOption3);
             EventManager.StartListening("SelectOption4", SetOption4);
@@ -63,6 +66,12 @@ namespace Assets.New_Scripts
             EventManager.StopListening("SelectOption2", SetOption2);
             EventManager.StopListening("SelectOption3", SetOption3);
             EventManager.StopListening("SelectOption4", SetOption4);
+
+        }
+
+        void Start()
+        {
+            PopulatePathList();
 
         }
 
@@ -110,6 +119,20 @@ namespace Assets.New_Scripts
             //Debug.Log("Current option is: " + value);
             CmdSetOptionValue(value);
 
+        }
+
+        private void PopulatePathList()
+        {
+            lstPrefabsPaths.Add("Prefabs/VictChairDining");
+            lstPrefabsPaths.Add("Prefabs/VictBathtubFrupere");
+            lstPrefabsPaths.Add("Prefabs/VictDivanToen");
+
+           
+        }
+
+        public string GetObjectChoice()
+        {
+            return lstPrefabsPaths[selectedOption];
         }
 
         [ClientRpc]

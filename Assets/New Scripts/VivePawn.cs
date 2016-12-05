@@ -8,6 +8,7 @@ public partial class VivePawn : NetworkBehaviour
     private GameObject rayMesh;
     private PrimitiveManager primitiveManager;
     private ViveManipulator viveManipulator;
+    public TabletMenuHandler tabletManager;
 
    
     // Use this for initialization
@@ -24,6 +25,7 @@ public partial class VivePawn : NetworkBehaviour
         ViveBridge.Ungripped += ViveBridge_Ungripped;
 
         primitiveManager = new PrimitiveManager();
+        tabletManager = GameObject.FindObjectOfType<TabletMenuHandler>();
 
     }
 
@@ -175,6 +177,19 @@ public partial class VivePawn : NetworkBehaviour
                 else
                 {
                     RpcAddPosition(CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position, transform.forward));
+                }
+                break;
+
+            case InteractionMode.SpawnObjects:
+                if (isLocalPlayer)
+                {
+                    string currpath = tabletManager.GetObjectChoice();
+                    var primitive = SpawnFactory.SpawnSubstitute(currpath,
+                        CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position,
+                            transform.forward), transform.rotation);
+                    primitiveManager.RegisterPrimitive(primitive);
+                    primitiveManager.RegisterPosition(primitive.transform.position);
+
                 }
                 break;
         }
