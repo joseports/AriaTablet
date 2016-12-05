@@ -21,11 +21,18 @@ namespace Assets.New_Scripts
             viveRightController.TriggerUnclicked += ViveRightController_TriggerUnclicked;
             viveRightController.TriggerClicked += ViveRightController_TriggerClicked;
             viveRightController.Ungripped += ViveRightController_Ungripped;
+            viveRightController.MenuButtonUnclicked += ViveRightController_MenuButtonUnclicked;
             viveManipulator = new ViveManipulator(gameObject);
             primitiveManager = new PrimitiveManager();
 
             // Set Initial mode to Manipulation
             viveManipulator.InteractionMode = InteractionMode.Manipulation;
+        }
+
+        private void ViveRightController_MenuButtonUnclicked(object sender, ClickedEventArgs clickedEventArgs)
+        {
+            if (viveManipulator.InteractionMode == InteractionMode.SpawnPrimitives)
+                primitiveManager.RemoveLastBox();
         }
 
         private void ViveRightController_Ungripped(object sender, ClickedEventArgs clickedEventArgs)

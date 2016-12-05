@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Assets.New_Scripts
 {
@@ -61,11 +62,23 @@ namespace Assets.New_Scripts
             newBox.AddComponent<PersistentObjectData>();
             newBox.AddComponent<NetworkIdentity>();
 
+            proceduralBoxes.Add(newBox);
+
             UnSpawn();
 
             // Update number of points
             var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
             cTextMesh.text = "0 points";
+        }
+
+        public void RemoveLastBox()
+        {
+            var lastBox = proceduralBoxes.Last();
+            if (lastBox != null)
+            {
+                proceduralBoxes.Remove(proceduralBoxes.Last());
+                GameObject.Destroy(lastBox);
+            }
         }
 
         public void UnSpawn()
