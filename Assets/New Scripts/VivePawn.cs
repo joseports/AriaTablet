@@ -183,12 +183,12 @@ public partial class VivePawn : NetworkBehaviour
             case InteractionMode.SpawnObjects:
                 if (isLocalPlayer)
                 {
+                    Debug.Log("Substitution: " );
                     string currpath = tabletManager.GetObjectChoice();
                     var primitive = SpawnFactory.SpawnSubstitute(currpath,
                         CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position,
                             transform.forward), transform.rotation);
-                    primitiveManager.RegisterPrimitive(primitive);
-                    primitiveManager.RegisterPosition(primitive.transform.position);
+                    
 
                 }
                 break;

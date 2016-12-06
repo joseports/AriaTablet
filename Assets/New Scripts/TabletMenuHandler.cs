@@ -96,28 +96,28 @@ namespace Assets.New_Scripts
         {
             int value = 1;
             CmdSetOptionValue(value);
-            // Debug.Log("Current option is: " + value);
+            Debug.Log("Current option is: " + value);
         }
 
         void SetOption2()
         {
             int value = 2;
             CmdSetOptionValue(value);
-            // Debug.Log("Current option is: " + value);
+            Debug.Log("Current option is: " + value);
         }
 
         void SetOption3()
         {
             int value = 3;
             CmdSetOptionValue(value);
-            //Debug.Log("Current option is: " + value);
+            Debug.Log("Current option is: " + value);
         }
 
         void SetOption4()
         {
             int value = 4;
             //Debug.Log("Current option is: " + value);
-            CmdSetOptionValue(value);
+            //CmdSetOptionValue(value);
 
         }
 
