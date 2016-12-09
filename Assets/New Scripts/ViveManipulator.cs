@@ -43,16 +43,19 @@ namespace Assets.New_Scripts
 
             CaptureCollided();
 
-            ManipulatedObject.transform.parent = vivePawn.transform;
-
-            Debug.Log("Manipulating:" + lastCollided.name);
+            if (ManipulatedObject != null)
+            {
+                ManipulatedObject.transform.parent = vivePawn.transform;
+                Debug.Log("Manipulating:" + ManipulatedObject.name);
+            }
         }
 
         public void ReleaseObject()
         {
-            Debug.Log("Releasing:" + ManipulatedObject.name);
             if (ManipulatedObject != null)
             {
+                Debug.Log("Releasing:" + ManipulatedObject.name);
+
                 RestoreColor(ManipulatedObject);
                 ManipulatedObject.transform.parent = null;
                 ManipulatedObject = null;
@@ -74,6 +77,7 @@ namespace Assets.New_Scripts
                     break;
 
                 case InteractionMode.ScalePrefabs:
+
                     InteractionMode = InteractionMode.SpawnPrimitives;
                     break;
 
@@ -283,21 +287,22 @@ namespace Assets.New_Scripts
             RaycastHit hitInfo;
             var sphere = vivePawn.transform.Find(raySphereMesh).gameObject;
 
-            if (Physics.Raycast(new Ray(controllerPosition, controllerForward), out hitInfo) &&
-                string.Equals(hitInfo.transform.gameObject.tag, "Manipulable"))
+            if (Physics.Raycast(new Ray(controllerPosition, controllerForward), out hitInfo) )
             {
                 var collidedObject = hitInfo.transform.gameObject;
                 if (collidedObject != lastCollided)
                 {
-
-                    if (lastCollided != null)
+                    if (lastCollided != null && lastCollided.CompareTag("Manipulable"))
                         RestoreColor(lastCollided);
+
                     prevCollided = lastCollided;
                     lastCollided = hitInfo.transform.gameObject;
 
-                    var renderer = lastCollided.GetComponent<MeshRenderer>();
-                    originalMaterialColor = renderer.material.color;
-                    renderer.material.color = Colors.TransparentGreen;
+                    if (hitInfo.transform.gameObject.CompareTag("Manipulable"))
+                    {
+                        var viveHighlighter = collidedObject.GetComponent<ViveHighlighter>();
+                        viveHighlighter.Highlight(Colors.TransparentWhite);
+                    }
                 }
             }
             else
@@ -305,18 +310,19 @@ namespace Assets.New_Scripts
                 Ray r = new Ray(controllerPosition, controllerForward);
                 hitPoint = r.GetPoint(rayBeamLength);
 
-                if (lastCollided != null)
+                if (lastCollided != null && lastCollided.CompareTag("Manipulable"))
                 {
                     prevCollided = lastCollided;
-
                     RestoreColor(lastCollided);
                     lastCollided = null;
                 }
-                sphere.GetComponent<MeshRenderer>().enabled = false;
             }
 
             var newPosition = new Vector3(0, 0, (hitInfo.point - controllerPosition).magnitude);
+
             newPosition.z -= sphere.transform.localScale.z;
+            if (hitInfo.collider == null)
+                newPosition.z += 10;
             //for indicators
             hitPoint = hitInfo.point;
             sphere.transform.localPosition = isServer ? newPosition : Vector3.Lerp(sphere.transform.localPosition, newPosition, Time.deltaTime * SmoothStep);
@@ -345,7 +351,7 @@ namespace Assets.New_Scripts
 
         void RestoreColor(GameObject gameObject)
         {
-            gameObject.GetComponent<MeshRenderer>().material.color = originalMaterialColor;
+            gameObject.GetComponent<ViveHighlighter>().RemoveHighlight();
         }
 
     }
