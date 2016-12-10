@@ -4,12 +4,13 @@ using UnityEngine.Networking;
 
 public partial class VivePawn : NetworkBehaviour
 {
-    public ViveBridge ViveBridge;
     private GameObject rayMesh;
     private PrimitiveManager primitiveManager;
     private ViveManipulator viveManipulator;
+
+    public ViveBridge ViveBridge;
     public TabletMenuHandler tabletManager;
-   
+
     // Use this for initialization
     void Start()
     {
@@ -143,27 +144,26 @@ public partial class VivePawn : NetworkBehaviour
                 if (isLocalPlayer)
                 {
                     var primitive = SpawnFactory.Spawn("Prefabs/Scene1/SphereMarker",
-                        CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position,
-                            transform.forward), transform.rotation);
+                        CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position, transform.forward),
+                        transform.rotation);
                     primitiveManager.RegisterPrimitive(primitive);
                     primitiveManager.RegisterPosition(primitive.transform.position);
                 }
                 else
                 {
-                    RpcAddPosition(CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position, transform.forward));
+                    RpcAddPosition(CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position,
+                        transform.forward));
                 }
                 break;
 
             case InteractionMode.SpawnObjects:
                 if (isLocalPlayer)
                 {
-                    Debug.Log("Substitution: " );
+                    Debug.Log("Substitution: ");
                     string currpath = tabletManager.GetObjectChoice();
                     var primitive = SpawnFactory.SpawnSubstitute(currpath,
-                        CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position,
-                            transform.forward), transform.rotation);
-                    
-
+                        CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position, transform.forward),
+                        transform.rotation);
                 }
                 break;
         }
@@ -191,10 +191,8 @@ public partial class VivePawn : NetworkBehaviour
         }
         else
         {
-            transform.position = Vector3.Lerp(transform.position, ViveBridge.Position,
-                Time.deltaTime*ViveManipulator.SmoothStep);
-            transform.rotation = Quaternion.Lerp(transform.rotation, ViveBridge.Rotation,
-                Time.deltaTime*ViveManipulator.SmoothStep);
+            transform.position = Vector3.Lerp(transform.position, ViveBridge.Position, Time.deltaTime*ViveManipulator.SmoothStep);
+            transform.rotation = Quaternion.Lerp(transform.rotation, ViveBridge.Rotation, Time.deltaTime*ViveManipulator.SmoothStep);
         }
         rayMesh.transform.rotation = transform.rotation;
 
@@ -207,7 +205,7 @@ public partial class VivePawn : NetworkBehaviour
                 break;
         }
 
-        
+
     }
 
     void CheckHits()
@@ -254,7 +252,7 @@ public partial class VivePawn : NetworkBehaviour
 
         if (!isLocalPlayer)
             return;
-        
+
         var meshRenderers = GetComponentsInChildren<MeshRenderer>();
         foreach (var meshRenderer in meshRenderers)
         {

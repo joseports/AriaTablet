@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public class ViveHighlighter : MonoBehaviour
 {
     Color tintColor = Color.white;
-    float tintRatio = 0.2f;
+    float tintRatio = 0.95f;
     private Queue<Color> oldColors = new Queue<Color>();
 
     void Start() { }

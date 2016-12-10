@@ -8,11 +8,16 @@ namespace Assets.New_Scripts
 {
     public class HmdVivePawn : MonoBehaviour
     {
+        private ViveManipulator viveManipulator;
+        private PrimitiveManager primitiveManager;
+
         public GameObject ViveRightController;
         public GameObject ViveLeftController;
 
-        private ViveManipulator viveManipulator;
-        private PrimitiveManager primitiveManager;
+        public Vector3 HitPoint
+        {
+            get { return viveManipulator.HitPoint; }
+        }
 
         public void Start()
         {

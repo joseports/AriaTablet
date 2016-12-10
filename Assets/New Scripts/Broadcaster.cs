@@ -90,7 +90,7 @@ public class Broadcaster : MonoBehaviour {
     void Update ()
     {
         var miniDisplay = GameObject.Find("MiniDisplay");
-        var viveCamera = GameObject.Find("Camera (head)");
+        var viveCamera = GameObject.FindGameObjectWithTag("MainCamera");
 
         miniDisplay.transform.LookAt(viveCamera.transform.position, Vector3.up);
         miniDisplay.transform.rotation *= Quaternion.AngleAxis(180, Vector3.up);
