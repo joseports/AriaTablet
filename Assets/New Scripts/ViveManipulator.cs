@@ -17,7 +17,11 @@ namespace Assets.New_Scripts
         private int quadrantWorld;
         private int quadrantObject;
         private float scaleFactor = 1.0f;
+<<<<<<< HEAD
         public Vector3 hitPoint;
+=======
+        private Vector3 hitPoint;
+>>>>>>> fb45009275d28eeedff6341eec519a76a1111af0
         private Color originalMaterialColor;
 
         public Vector3 PrevPosition { get; set; }
