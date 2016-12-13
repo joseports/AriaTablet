@@ -9,11 +9,8 @@ public partial class VivePawn : NetworkBehaviour
     private PrimitiveManager primitiveManager;
     private ViveManipulator viveManipulator;
 
-<<<<<<< HEAD
     private ViveNetRadialMenu radialMenu;
 
-=======
->>>>>>> fb45009275d28eeedff6341eec519a76a1111af0
     public ViveBridge ViveBridge;
     public TabletMenuHandler tabletManager;
 
@@ -184,17 +181,7 @@ public partial class VivePawn : NetworkBehaviour
             case InteractionMode.SpawnObjects:
                 if (isLocalPlayer)
                 {
-<<<<<<< HEAD
-
-                    
                     radialMenu.PlaceObject(radialMenu.FindIndex(ViveBridge.Touchpad), viveManipulator.GetHitPoint());
-=======
-                    Debug.Log("Substitution: ");
-                    string currpath = tabletManager.GetObjectChoice();
-                    var primitive = SpawnFactory.SpawnSubstitute(currpath,
-                        CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position, transform.forward),
-                        transform.rotation);
->>>>>>> fb45009275d28eeedff6341eec519a76a1111af0
                 }
                 break;
         }
@@ -242,14 +229,10 @@ public partial class VivePawn : NetworkBehaviour
         }
     }
 
-<<<<<<< HEAD
     //[ClientRpc]
     void RpcHighlightRadialMenuItem(int index)
     {
         radialMenu.Highlight(index);
-=======
-
->>>>>>> fb45009275d28eeedff6341eec519a76a1111af0
     }
 
     void CheckHits()

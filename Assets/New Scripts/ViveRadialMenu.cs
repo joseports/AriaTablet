@@ -19,16 +19,9 @@ public class ViveRadialMenu : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
-<<<<<<< HEAD
-	    objects = new List<GameObject>();
-	    var primitives = new PrimitiveType[]
-	        {PrimitiveType.Cube, PrimitiveType.Cylinder, PrimitiveType.Sphere, PrimitiveType.Capsule,};
-	    for (int i = 0; i < 4; i++)
-=======
         hlRefs = new Dictionary<int, List<ViveHighlighter>>();
 	    int i = 0;
 	    foreach (var prefab in ObjectList)
->>>>>>> fb45009275d28eeedff6341eec519a76a1111af0
 	    {
             var prop = GameObject.Instantiate(prefab);
 	        prop.name = "Prop" + i;
@@ -47,14 +40,12 @@ public class ViveRadialMenu : MonoBehaviour
 
 	        i++;
 	    }
-<<<<<<< HEAD
-=======
 
         viveLeftController = GetComponentInParent<SteamVR_TrackedController>();
         viveLeftController.PadUnclicked += ViveLeftController_PadUnclicked;
 
 	    vivePawn = ViveRightController.GetComponentInChildren<HmdVivePawn>();
->>>>>>> fb45009275d28eeedff6341eec519a76a1111af0
+
 	}
 
     private void ViveLeftController_PadUnclicked(object sender, ClickedEventArgs e)
