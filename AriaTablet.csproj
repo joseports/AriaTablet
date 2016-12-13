@@ -93,6 +93,7 @@
     <Compile Include="Assets\New Scripts\ViveHighlighter.cs" />
     <Compile Include="Assets\New Scripts\ViveManipulable.cs" />
     <Compile Include="Assets\New Scripts\ViveManipulator.cs" />
+    <Compile Include="Assets\New Scripts\ViveNetRadialMenu.cs" />
     <Compile Include="Assets\New Scripts\VivePawn.cs" />
     <Compile Include="Assets\New Scripts\ViveRadialMenu.cs" />
     <Compile Include="Assets\SteamVR\Extras\SteamVR_GazeTracker.cs" />
@@ -129,6 +130,10 @@
     <Compile Include="Assets\SteamVR\Scripts\SteamVR_TrackedObject.cs" />
     <Compile Include="Assets\SteamVR\Scripts\SteamVR_UpdatePoses.cs" />
     <Compile Include="Assets\SteamVR\Scripts\SteamVR_Utils.cs" />
+    <Compile Include="Assets\Victorian_Interiors\Bin for Parts\Doors\Door Components\Deactivate.cs" />
+    <Compile Include="Assets\Victorian_Interiors\Bin for Parts\Doors\Door Components\DoorActivator.cs" />
+    <Compile Include="Assets\Victorian_Interiors\Prefab Rooms\Scripts\RoomToggle.cs" />
+    <Compile Include="Assets\Victorian_Interiors\Prefab Rooms\Scripts\StartingRoom.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\SteamVR\Resources\SteamVR_AlphaOut.shader" />

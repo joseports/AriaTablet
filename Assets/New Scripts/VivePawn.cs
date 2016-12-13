@@ -1,15 +1,19 @@
-﻿using Assets.New_Scripts;
+﻿using System;
+using Assets.New_Scripts;
 using UnityEngine;
 using UnityEngine.Networking;
 
 public partial class VivePawn : NetworkBehaviour
 {
-    public ViveBridge ViveBridge;
     private GameObject rayMesh;
     private PrimitiveManager primitiveManager;
     private ViveManipulator viveManipulator;
+
+    private ViveNetRadialMenu radialMenu;
+
+    public ViveBridge ViveBridge;
     public TabletMenuHandler tabletManager;
-   
+
     // Use this for initialization
     void Start()
     {
@@ -17,7 +21,10 @@ public partial class VivePawn : NetworkBehaviour
         viveManipulator = new ViveManipulator(gameObject);
         rayMesh = GetComponentInChildren<MeshRenderer>().transform.parent.gameObject;
 
+        radialMenu = GetComponentInChildren<ViveNetRadialMenu>();
+
         Debug.Log("IsServer: " + isServer);
+        ViveBridge.TriggerClicked += ViveBridge_TriggerClicked;
         ViveBridge.TriggerClicked += ViveBridge_TriggerClicked;
         ViveBridge.TriggerUnclicked += ViveBridge_TriggerUnclicked;
         ViveBridge.PadUnclicked += ViveBridge_PadUnclicked;
@@ -82,6 +89,12 @@ public partial class VivePawn : NetworkBehaviour
 
                 break;
 
+                case InteractionMode.SpawnObjects:
+                if (isLocalPlayer)
+                    radialMenu.gameObject.SetActive(false);
+                //else
+                //    RpcDeactivateRadialMenu();
+                break;
         }
 
         // this actually changes the mode
@@ -97,6 +110,16 @@ public partial class VivePawn : NetworkBehaviour
                     viveManipulator.DeactivateRay();
                     viveManipulator.ActivateTempPrimitive(ViveManipulator.MinimumPrimitiveDistance);
                 }
+                break;
+
+
+                case InteractionMode.SpawnObjects:
+                if (isLocalPlayer)
+                {
+                    radialMenu.gameObject.SetActive(true);
+                }
+                //else
+                //    RpcActivateRadialMenu();
                 break;
         }
     }
@@ -143,27 +166,24 @@ public partial class VivePawn : NetworkBehaviour
                 if (isLocalPlayer)
                 {
                     var primitive = SpawnFactory.Spawn("Prefabs/Scene1/SphereMarker",
-                        CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position,
-                            transform.forward), transform.rotation);
+                        CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position, transform.forward),
+                        transform.rotation);
                     primitiveManager.RegisterPrimitive(primitive);
                     primitiveManager.RegisterPosition(primitive.transform.position);
                 }
                 else
                 {
-                    RpcAddPosition(CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position, transform.forward));
+                    RpcAddPosition(CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position,
+                        transform.forward));
                 }
                 break;
 
             case InteractionMode.SpawnObjects:
                 if (isLocalPlayer)
                 {
-                    Debug.Log("Substitution: " );
-                    string currpath = tabletManager.GetObjectChoice();
-                    var primitive = SpawnFactory.SpawnSubstitute(currpath,
-                        CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position,
-                            transform.forward), transform.rotation);
-                    
 
+                    
+                    radialMenu.PlaceObject(radialMenu.FindIndex(ViveBridge.Touchpad), viveManipulator.GetHitPoint());
                 }
                 break;
         }
@@ -191,10 +211,8 @@ public partial class VivePawn : NetworkBehaviour
         }
         else
         {
-            transform.position = Vector3.Lerp(transform.position, ViveBridge.Position,
-                Time.deltaTime*ViveManipulator.SmoothStep);
-            transform.rotation = Quaternion.Lerp(transform.rotation, ViveBridge.Rotation,
-                Time.deltaTime*ViveManipulator.SmoothStep);
+            transform.position = Vector3.Lerp(transform.position, ViveBridge.Position, Time.deltaTime*ViveManipulator.SmoothStep);
+            transform.rotation = Quaternion.Lerp(transform.rotation, ViveBridge.Rotation, Time.deltaTime*ViveManipulator.SmoothStep);
         }
         rayMesh.transform.rotation = transform.rotation;
 
@@ -205,9 +223,18 @@ public partial class VivePawn : NetworkBehaviour
             case InteractionMode.ScalePrefabs:
                 viveManipulator.ScaleObject();
                 break;
-        }
 
-        
+            case InteractionMode.SpawnObjects:
+                int index = radialMenu.FindIndex(ViveBridge.Touchpad);
+                    radialMenu.Highlight(index);
+                break;
+        }
+    }
+
+    //[ClientRpc]
+    void RpcHighlightRadialMenuItem(int index)
+    {
+        radialMenu.Highlight(index);
     }
 
     void CheckHits()
@@ -254,11 +281,10 @@ public partial class VivePawn : NetworkBehaviour
 
         if (!isLocalPlayer)
             return;
-        
+
         var meshRenderers = GetComponentsInChildren<MeshRenderer>();
         foreach (var meshRenderer in meshRenderers)
         {
-            meshRenderer.material.color = Color.magenta;
             meshRenderer.enabled = true;
         }
 

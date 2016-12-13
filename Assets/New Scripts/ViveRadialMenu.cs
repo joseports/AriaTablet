@@ -10,7 +10,6 @@ public class ViveRadialMenu : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
-
 	    objects = new List<GameObject>();
 	    var primitives = new PrimitiveType[]
 	        {PrimitiveType.Cube, PrimitiveType.Cylinder, PrimitiveType.Sphere, PrimitiveType.Capsule,};
@@ -23,7 +22,6 @@ public class ViveRadialMenu : MonoBehaviour
             primitive.transform.localPosition = RadialCoordinates(i, 4, .25f, 0f);
             objects.Add(primitive);
 	    }
-
 	}
 
     static Vector3 RadialCoordinates(int index, int count, float r, float d)

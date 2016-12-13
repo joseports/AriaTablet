@@ -1,4 +1,5 @@
-﻿using Assets.New_Scripts;
+﻿using System;
+using Assets.New_Scripts;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -6,23 +7,25 @@ public class ViveBridge : NetworkBehaviour
 {
     public ViveController ViveRightController;
     private SteamVR_TrackedController controller;
+    private SteamVR_Controller.Device device;
 
     [SyncVar] public Vector3 Position;
     [SyncVar] public Quaternion Rotation;
     [SyncVar] public Vector3 Forward;
     [SyncVar] public Vector3 LastPosition;
+    [SyncVar] public Vector2 Touchpad;
 
     private GameObject lastCollided;
     private GameObject prevCollided;
     private GameObject manipulatedObject;
-    [SyncVar] private InteractionMode interactionMode;
     private bool isDragging;
-
+    
     public event ClickedEventHandler TriggerClicked;
     public event ClickedEventHandler TriggerUnclicked;
     public event ClickedEventHandler PadUnclicked;
     public event ClickedEventHandler Gripped;
     public event ClickedEventHandler Ungripped;
+    public event EventHandler Inited;
 
     public Vector3 DeltaPosition
     {
@@ -45,6 +48,7 @@ public class ViveBridge : NetworkBehaviour
             Forward = controller.transform.forward;
             LastPosition = Position;
             Position = currentPosition;
+            Touchpad = device.GetAxis(Valve.VR.EVRButtonId.k_EButton_Axis0);
         }
     }
 
@@ -56,6 +60,15 @@ public class ViveBridge : NetworkBehaviour
         controller.PadUnclicked += Controller_PadUnclicked;
         controller.Gripped += Controller_Gripped;
         controller.Ungripped += Controller_OnUngripped;
+        device = SteamVR_Controller.Input((int)controller.controllerIndex);
+        ViveBridge_Inited(this, EventArgs.Empty);
+    }
+
+    private void ViveBridge_Inited(object sender, EventArgs e)
+    {
+        var handler = Inited;
+        if (handler != null)
+            handler(sender, e);
     }
 
     private void Controller_OnUngripped(object sender, ClickedEventArgs e)

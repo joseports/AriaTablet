@@ -18,12 +18,11 @@ namespace Assets.New_Scripts
         private int quadrantObject;
         private float scaleFactor = 1.0f;
         public Vector3 hitPoint;
-        public float rayBeamLength = 0.5f;
-
         private Color originalMaterialColor;
 
         public Vector3 PrevPosition { get; set; }
         public Vector3 CurrentPosition { get; set; }
+        public Vector3 HitPoint { get { return hitPoint; } }
         public GameObject ManipulatedObject { get; set; }
         public InteractionMode InteractionMode { get; set; }
 
@@ -82,7 +81,7 @@ namespace Assets.New_Scripts
                     break;
 
                 case InteractionMode.SpawnPrimitives:
-                    InteractionMode = InteractionMode.Manipulation;
+                    InteractionMode = InteractionMode.SpawnObjects;
                     break;
 
                 case InteractionMode.SpawnObjects:
@@ -307,9 +306,6 @@ namespace Assets.New_Scripts
             }
             else
             {
-                Ray r = new Ray(controllerPosition, controllerForward);
-                hitPoint = r.GetPoint(rayBeamLength);
-
                 if (lastCollided != null && lastCollided.CompareTag("Manipulable"))
                 {
                     prevCollided = lastCollided;
@@ -352,6 +348,13 @@ namespace Assets.New_Scripts
         void RestoreColor(GameObject gameObject)
         {
             gameObject.GetComponent<ViveHighlighter>().RemoveHighlight();
+        }
+
+
+        public Vector3 GetHitPoint()
+        {
+
+            return hitPoint;
         }
 
     }
