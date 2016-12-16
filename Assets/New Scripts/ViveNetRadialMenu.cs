@@ -1,57 +1,39 @@
-﻿using System;
-using Assets.New_Scripts;
-using UnityEngine;
-using System.Collections;
+﻿using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections.Generic;
-using System.Linq;
 
 public class ViveNetRadialMenu : MonoBehaviour
 {
-    private const float ScaleFactor = 0.1f;
-    private Dictionary<int, List<ViveHighlighter>> hlRefs;
+    public float Radius = 0.35f;
+    public float Distance = 0.75f;
+    public float ScaleFactor = 0.1f;
+    public int PrefabsPerPage = 3;
+
     public List<GameObject> PrefabList;
     public List<GameObject> InstanceList;
     public int ItemCount { get { return PrefabList.Count; } }
 
-    public int ControllerIndex { get; internal set; }
+    private Dictionary<int, List<ViveHighlighter>> hlRefs;
 
-    private HmdVivePawn vivePawn;
     private SteamVR_TrackedController viveLeftController;
     private GameObject currentSelection;
+    private int pagePrefabIndex;
 
     // Use this for initialization
     void Start()
     {
-        hlRefs = new Dictionary<int, List<ViveHighlighter>>();
-        int i = 0;
-        PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/VictChairDining"));
+        //PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/VictChairDining"));
+        PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/Chair_Smoking_LOD"));
+        PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/OfficeDesk"));
+        PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/SmallEndtable"));
         PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/VictCreamPitcher"));
-        PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/VictDivanToen"));
+        //PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/VictDivanToen"));
         PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/VictPhonograph"));
-        PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/VictTableFancyRotsch"));
         PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/VictTypewriter"));
 
-        foreach (var prefab in PrefabList)
-        {
-            var prop = GameObject.Instantiate(prefab);
-            hlRefs.Add(i, new List<ViveHighlighter>());
-            InstanceList.Add(prop);
-            prop.transform.position = Vector3.zero;
-            prop.transform.localPosition = Vector3.zero;
-            prop.transform.parent = transform;
-            prop.transform.localScale = new Vector3(ScaleFactor, ScaleFactor, ScaleFactor);
-            prop.transform.localPosition = RadialCoordinates(i, PrefabList.Count, 0.35f, 0.750f);
-
-            foreach (var cRenderer in prop.GetComponentsInChildren<Renderer>())
-            {
-                ViveHighlighter.AddTo(cRenderer.gameObject);
-                hlRefs[i].Add(cRenderer.gameObject.GetComponent<ViveHighlighter>());
-            }
-
-            i++;
-        }
-
+        InitPrefabs();
+        pagePrefabIndex = -3;
+        CyclePage();
         gameObject.SetActive(false);
     }
 
@@ -69,11 +51,15 @@ public class ViveNetRadialMenu : MonoBehaviour
         viveLeftController.PadUnclicked += ViveLeftController_PadUnclicked;
     }
 
-    public void PlaceObject(int itemIndex, Vector3 position)
+    public void PlaceObject(Vector3 position)
     {
-        Debug.Log("index:" + itemIndex);
-        var newObject = (GameObject)GameObject.Instantiate(PrefabList[itemIndex], position, Quaternion.identity);
-
+        if (currentSelection == null || position == Vector3.zero)
+            return;
+        position += currentSelection.transform.position;
+        var newObject = (GameObject)GameObject.Instantiate(currentSelection, position, currentSelection.transform.localRotation);
+        var scale = newObject.GetComponent<ScaleData>().WorldScale;
+        newObject.transform.localScale = scale;
+        
         NetworkServer.Spawn(newObject);
     }
 
@@ -99,22 +85,60 @@ public class ViveNetRadialMenu : MonoBehaviour
         return itemIndex;
     }
 
-
+    bool IsIndexValid(int index)
+    {
+        return index >= 0 && index < PrefabsPerPage;
+    }
+    
     // Update is called once per frame
     void Update()
     {
     }
 
-
-
     public void Highlight(int itemIndex)
     {
-        var hCube = transform.FindChild("HighlighterCube");
-        var bounds = InstanceList[itemIndex].GetComponentInChildren<Renderer>().bounds;
-        hCube.localScale = bounds.size;
-        hCube.localRotation = InstanceList[itemIndex].transform.localRotation;
-        hCube.localPosition = InstanceList[itemIndex].transform.localPosition;
+        if (!IsIndexValid(itemIndex))
+            return;
 
+        var light = transform.FindChild("Spotlight");
+
+        itemIndex += pagePrefabIndex;
+        light.localPosition = InstanceList[itemIndex].transform.localPosition + new Vector3(0, 0, -0.5f);
         currentSelection = PrefabList[itemIndex];
+    }
+
+    void InitPrefabs()
+    {
+        int itemIndex = 0;
+        foreach (var prefab in PrefabList)
+        {
+            var prop = GameObject.Instantiate(prefab);
+            Vector3 scale = prop.GetComponent<ScaleData>().MenuScale;
+            InstanceList.Add(prop);
+            prop.layer = 8;
+            for (int i=0; i<prop.transform.childCount; i++)
+            {
+                var child = prop.transform.GetChild(i).gameObject;
+                child.layer = 8;
+            }
+            prop.transform.position = Vector3.zero;
+            prop.transform.parent = transform;
+            prop.transform.localScale = scale;
+            //prop.transform.localRotation = Quaternion.identity;
+            prop.transform.localPosition = RadialCoordinates(itemIndex, PrefabList.Count, Radius, Distance);
+            itemIndex = (itemIndex + 1)%PrefabsPerPage;
+        }
+    }
+
+    public void CyclePage()
+    {
+        pagePrefabIndex = (pagePrefabIndex + PrefabsPerPage)%PrefabList.Count;
+        foreach (var prefab in InstanceList)
+            prefab.SetActive(false);
+
+        for (int i=pagePrefabIndex; i < pagePrefabIndex+PrefabsPerPage; i++)
+        {
+            InstanceList[i].SetActive(true);
+        }
     }
 }

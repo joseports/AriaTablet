@@ -37,14 +37,28 @@ public partial class VivePawn : NetworkBehaviour
 
     private void ViveBridge_Ungripped(object sender, ClickedEventArgs e)
     {
-        if (!isLocalPlayer)
-            return;
 
-        Debug.Log("Ungripped");
-        primitiveManager.UndoSpawns();
 
-        var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
-        cTextMesh.text = primitiveManager.IndicatorCount + " points";
+        switch (viveManipulator.InteractionMode)
+        {
+            case InteractionMode.SpawnPrimitives:
+                if (isLocalPlayer)
+                {
+                    Debug.Log("Ungripped");
+                    primitiveManager.UndoSpawns();
+
+                    var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
+                    cTextMesh.text = primitiveManager.IndicatorCount + " points";
+                }
+                break;
+
+            case InteractionMode.SpawnObjects:
+                if (isLocalPlayer)
+                    radialMenu.CyclePage();
+                else
+                    RpcRadialMenuCyclePage();
+                break;
+        }
     }
 
     private void ViveBridge_PadUnclicked(object sender, ClickedEventArgs e)
@@ -61,6 +75,12 @@ public partial class VivePawn : NetworkBehaviour
         primitiveManager.RegisterPosition(position);
         var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
         cTextMesh.text = primitiveManager.IndicatorCount + " points";
+    }
+
+    [ClientRpc]
+    private void RpcRadialMenuCyclePage()
+    {
+        radialMenu.CyclePage();
     }
 
     private void ChangeMode()
@@ -181,7 +201,7 @@ public partial class VivePawn : NetworkBehaviour
             case InteractionMode.SpawnObjects:
                 if (isLocalPlayer)
                 {
-                    radialMenu.PlaceObject(radialMenu.FindIndex(ViveBridge.Touchpad), viveManipulator.GetHitPoint());
+                    radialMenu.PlaceObject(viveManipulator.GetHitPoint());
                 }
                 break;
         }
@@ -224,16 +244,11 @@ public partial class VivePawn : NetworkBehaviour
 
             case InteractionMode.SpawnObjects:
                 int index = radialMenu.FindIndex(ViveBridge.Touchpad);
-                    radialMenu.Highlight(index);
+                radialMenu.Highlight(index);
                 break;
         }
     }
 
-    //[ClientRpc]
-    void RpcHighlightRadialMenuItem(int index)
-    {
-        radialMenu.Highlight(index);
-    }
 
     void CheckHits()
     {

@@ -16,7 +16,6 @@ public class ViveController : MonoBehaviour
         ViveBridge.SetupEvents(controller);
 	}
 
-
     // Update is called once per frame
     void Update()
     {

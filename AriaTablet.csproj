@@ -82,6 +82,7 @@
     <Compile Include="Assets\New Scripts\InteractionMode.cs" />
     <Compile Include="Assets\New Scripts\PersistentObjectData.cs" />
     <Compile Include="Assets\New Scripts\PrimitiveManager.cs" />
+    <Compile Include="Assets\New Scripts\ScaleData.cs" />
     <Compile Include="Assets\New Scripts\SceneChanger.cs" />
     <Compile Include="Assets\New Scripts\SceneId.cs" />
     <Compile Include="Assets\New Scripts\ScrollSnapRect.cs" />
