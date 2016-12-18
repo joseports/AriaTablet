@@ -1,28 +1,107 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Assets.New_Scripts
 {
-    public static class BoxGenerator
+    public class BoxGenerator
     {
-        public static GameObject CreateBox(Vector3[] inPoints, Material mat)
+        private Vector3 center;
+        private readonly List<Vector3> points;
+
+        private int Count
         {
-            var isSize = false;
+            get { return points.Count; }
+        }
 
-            var isSorted = false;
-            List<Vector3> points = SortInputPoints(inPoints, out isSorted);
+        private BoxGenerator(IEnumerable<Vector3> points)
+        {
+            this.points = new List<Vector3>(points);
+        }
 
-            if (points.Count == 4)
-                isSize = true;
+        static Vector3 Average(IEnumerable<Vector3> points)
+        {
+            Vector3[] pArray = points.ToArray();
+            Vector3 average= Vector3.zero;
+            foreach (var p in pArray)
+                average += p;
+            return average/pArray.Length;
+        }
 
-            bool baseProvided = false;
+        GameObject Calculate2()
+        {
+            List<Vector3> plane1 = points.Take(4).ToList();
+            List<Vector3> plane2 = new List<Vector3>();
+            float averageY1 = plane1.Select(p => p.y).Average();
+            float averageY2 = 0;
+            plane1.Sort(Less);
 
             if (points.Count == 8)
             {
-                baseProvided = true;
-                isSize = true;
+                plane2 = points.Skip(4).Take(4).ToList();
+                averageY2 = points.Count == 8 ? plane2.Select(p => p.y).Average() : 0;
+                plane2.Sort(Less);
             }
 
+            center = Average(points);
+            
+            Vector2 a = new Vector2(plane1[0].x, plane1[0].z);
+            Vector2 b = new Vector2(plane1[1].x, plane1[1].z);
+            Vector2 c = new Vector2(plane1[2].x, plane1[2].z);
+            Vector2 d = new Vector2(plane1[3].x, plane1[3].z);
+
+            Vector2 ab = b - a;
+            Vector2 bc = c - b;
+
+            float angle;
+            float angleRight = 0;
+            float angleY;
+            float width = ab.magnitude;
+            float depth = bc.magnitude;
+
+            if (Mathf.Abs(width - depth) <= 0.05)
+            {
+                bc = (c - a);
+                depth = bc.magnitude;
+            }
+
+            float abR = Vector2.Angle(Vector2.right, ab);
+            float abU = Vector2.Angle(Vector2.up, ab);
+            float bcR = Vector2.Angle(Vector2.right, bc);
+            float bcU = Vector2.Angle(Vector2.up, bc);
+
+            if (AngleDir(ab, Vector2.up) > 0)
+            {
+                angle = abU > 90 ? abR: 180 - abR;
+            }
+            else
+            {
+                angle = bcU > 90 ? 180-abR : abR ;
+            }
+
+            Vector3 scale = new Vector3(width, averageY1, depth);
+
+            if (points.Count == 8)
+                scale.y = Mathf.Abs(averageY1 - averageY2);
+
+            Debug.Log("Angle: "+angle + "\tDir: " + AngleDir(ab, Vector2.up) +  "\tabRight: " + Vector2.Angle(Vector2.right, ab) + "\tabUp: "+ Vector2.Angle(Vector2.up, ab) + 
+                "\n\t\t\tbcRight: " + Vector2.Angle(Vector2.right, bc) +"\tbcUp: " + Vector2.Angle(bc, Vector2.up));
+
+
+            var rotation = Quaternion.AngleAxis(angle, Vector3.up);
+            var position = new Vector3(center.x, points.Count == 4 ? averageY1/2 : center.y, center.z);
+
+            var box = SpawnFactory.Spawn("Prefabs/Scene1/Primitive", position, rotation, scale);
+            return box;
+        }
+
+        public static float AngleDir(Vector2 A, Vector2 B)
+        {
+            return -A.x * B.y + A.y * B.x;
+        }
+
+        GameObject Calculate(Material mat)
+        {
             var primGO = new GameObject("Box");
             var primMFilter = primGO.AddComponent<MeshFilter>();
             var primMRend = primGO.AddComponent<MeshRenderer>();
@@ -30,7 +109,21 @@ namespace Assets.New_Scripts
 
             var boxMesh = new Mesh();
             boxMesh.Clear();
-        
+
+            var isSize = false;
+            var isSorted = false;
+
+            if (Count == 4)
+                isSize = true;
+
+            bool baseProvided = false;
+
+            if (Count == 8)
+            {
+                baseProvided = true;
+                isSize = true;
+            }
+
             if (isSize)
             {
                 var height = 0.25f;
@@ -218,8 +311,41 @@ namespace Assets.New_Scripts
 
             primColl.isTrigger = false;
 
-
             return primGO;
+        }
+
+        public static GameObject CreateBox(IEnumerable<Vector3> inPoints)
+        {
+            var boxGenerator = new BoxGenerator(inPoints);
+            
+            return boxGenerator.Calculate2();
+        }
+
+        int Less(Vector3 a, Vector3 b)
+        {
+            if (a.x - center.x >= 0 && b.x - center.x < 0)
+                return -1;
+            if (a.x - center.x < 0 && b.x - center.x >= 0)
+                return 1;
+            if (a.x - center.x == 0 && b.x - center.x == 0)
+            {
+                if (a.y - center.y >= 0 || b.y - center.y >= 0)
+                    return a.y < b.y ? 1 : -1;
+                return b.y < a.y ? 1 : -1;
+            }
+
+            // compute the cross product of vectors (center -> a) x (center -> b)
+            float det = (a.x - center.x) * (b.y - center.y) - (b.x - center.x) * (a.y - center.y);
+            if (det < 0)
+                return -1;
+            if (det > 0)
+                return 1;
+
+            // pofloats a and b are on the same line from the center
+            // check which pofloat is closer to the center
+            float d1 = (a.x - center.x) * (a.x - center.x) + (a.y - center.y) * (a.y - center.y);
+            float d2 = (b.x - center.x) * (b.x - center.x) + (b.y - center.y) * (b.y - center.y);
+            return d1 > d2 ? -1 : 1;
         }
 
         private static List<Vector3> SortInputPoints(Vector3[] points, out bool isSorted)

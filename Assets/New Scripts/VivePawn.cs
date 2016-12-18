@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Assets.New_Scripts;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -8,18 +9,21 @@ public partial class VivePawn : NetworkBehaviour
     private GameObject rayMesh;
     private PrimitiveManager primitiveManager;
     private ViveManipulator viveManipulator;
-
     private ViveNetRadialMenu radialMenu;
+    private Dictionary<string, GameObject> boxObject;
+
+    private string lastCollided;
 
     public ViveBridge ViveBridge;
-    public TabletMenuHandler tabletManager;
 
     // Use this for initialization
     void Start()
     {
         ViveBridge = GameObject.Find("ViveBridge").GetComponent<ViveBridge>();
-        viveManipulator = new ViveManipulator(gameObject);
+        viveManipulator = new ViveManipulator(gameObject, ViveBridge);
         rayMesh = GetComponentInChildren<MeshRenderer>().transform.parent.gameObject;
+
+        boxObject = new Dictionary<string, GameObject>();
 
         radialMenu = GetComponentInChildren<ViveNetRadialMenu>();
 
@@ -27,28 +31,79 @@ public partial class VivePawn : NetworkBehaviour
         ViveBridge.TriggerClicked += ViveBridge_TriggerClicked;
         ViveBridge.TriggerClicked += ViveBridge_TriggerClicked;
         ViveBridge.TriggerUnclicked += ViveBridge_TriggerUnclicked;
+        ViveBridge.PadClicked += ViveBridge_PadClicked;
         ViveBridge.PadUnclicked += ViveBridge_PadUnclicked;
         ViveBridge.Ungripped += ViveBridge_Ungripped;
+        ViveBridge.MenuUnclicked += ViveBridge_MenuUnclicked;
 
         primitiveManager = new PrimitiveManager();
-        tabletManager = GameObject.FindObjectOfType<TabletMenuHandler>();
+    }
 
+    private void ViveBridge_PadClicked(object sender, ClickedEventArgs e)
+    {
+        if (!isLocalPlayer)
+            return;
+
+        switch (ViveBridge.InteractionMode)
+        {
+            case InteractionMode.SpawnPrimitives:
+                Debug.Log("Indicator #: " + ViveBridge.IndicatorCount);
+                if (ViveBridge.IndicatorCount == 4 || ViveBridge.IndicatorCount == 8)
+                {
+                    if (isLocalPlayer && isServer)
+                    {
+                        var primitive = primitiveManager.SpawnBox();
+                        RpcSetScale(primitive, primitive.transform.localScale);
+                        RpcSetName(primitive, primitive.name);
+                        RpcClearPointsText();
+                        ViveBridge.ChangeMode = false;
+                    }
+                }
+                break;
+        }
+    }
+
+    private void ViveBridge_MenuUnclicked(object sender, ClickedEventArgs e)
+    {
+        switch (ViveBridge.InteractionMode)
+        {
+            case InteractionMode.SpawnPrimitives:
+                if (isLocalPlayer)
+                {
+                    lastCollided = string.Empty;
+                    primitiveManager.RemoveLastBox();
+                    if (primitiveManager.IndicatorCount == 0)
+                        RpcClearPointsText();
+                }
+                break;
+
+                case InteractionMode.SpawnObjects:
+                if (isLocalPlayer)
+                {
+                    string last = boxObject.Keys.Last();
+                    var childName = GameObject.Find(last).transform.GetChild(0).name;
+                    DisplayBox(childName, true);
+                    radialMenu.RemoveLastObject();
+                    boxObject.Remove(last);
+                }
+
+                break;
+        }
     }
 
     private void ViveBridge_Ungripped(object sender, ClickedEventArgs e)
     {
-
-
-        switch (viveManipulator.InteractionMode)
+        switch (ViveBridge.InteractionMode)
         {
             case InteractionMode.SpawnPrimitives:
                 if (isLocalPlayer)
                 {
                     Debug.Log("Ungripped");
-                    primitiveManager.UndoSpawns();
-
-                    var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
-                    cTextMesh.text = primitiveManager.IndicatorCount + " points";
+                    if (ViveBridge.IndicatorCount > 0)
+                    {
+                        primitiveManager.UndoSpawns();
+                        RpcDecreasePointsText();
+                    }
                 }
                 break;
 
@@ -69,13 +124,18 @@ public partial class VivePawn : NetworkBehaviour
             RpcChangeMode();
     }
 
-    [ClientRpc]
-    void RpcAddPosition(Vector3 position)
+    void UpdateTextMesh()
     {
-        primitiveManager.RegisterPosition(position);
         var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
-        cTextMesh.text = primitiveManager.IndicatorCount + " points";
+        cTextMesh.text = ViveBridge.IndicatorCount + " points";
     }
+
+    void UpdateTextMesh(int count)
+    {
+        var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
+        cTextMesh.text = count + " points";
+    }
+
 
     [ClientRpc]
     private void RpcRadialMenuCyclePage()
@@ -83,65 +143,121 @@ public partial class VivePawn : NetworkBehaviour
         radialMenu.CyclePage();
     }
 
+    [ClientRpc]
+    private void RpcSetScale(GameObject primitive, Vector3 scale)
+    {
+        primitive.transform.localScale = scale;
+    }
+
+    [ClientRpc]
+    private void RpcSetRotation(GameObject primitive, Quaternion rotation)
+    {
+        primitive.transform.localRotation = rotation;
+    }
+
+    [ClientRpc]
+    private void RpcSetActive(GameObject primitive, bool active)
+    {
+        primitive.SetActive(active);
+    }
+
     private void ChangeMode()
     {
         // this gets executed *before* leaving the current mode
-        switch (viveManipulator.InteractionMode)
+        switch (ViveBridge.InteractionMode)
         {
-            case InteractionMode.SpawnPrimitives:
-                Debug.Log("Indicator #: " + primitiveManager.IndicatorCount);
-                if (primitiveManager.IndicatorCount == 4 || primitiveManager.IndicatorCount == 8)
-                {
-                    if (isLocalPlayer)
-                        primitiveManager.SpawnBox();
-                    else
-                        primitiveManager.ClearIndicatorArrays();
-
-                    // Do not change mode if you have created a box
-                    return;
-                }
-
-                if (isLocalPlayer)
-                {
-                    viveManipulator.ActivateRay();
-                    viveManipulator.DeactivateTempPrimitive();
-                }
-
-                break;
-
-                case InteractionMode.SpawnObjects:
+            case InteractionMode.SpawnObjects:
                 if (isLocalPlayer)
                     radialMenu.gameObject.SetActive(false);
-                //else
-                //    RpcDeactivateRadialMenu();
+                break;
+
+            case InteractionMode.Manipulation:
+                if (isLocalPlayer)
+                {
+                    if (!ViveBridge.IsManipulating)
+                    {
+                        viveManipulator.ReleaseObject();
+                        viveManipulator.DeactivateRay();
+                    }
+                    else
+                        return;
+                }
+                else
+                {
+                    RpcCheckManipulation();
+                    return;
+                }
+                break;
+
+            case InteractionMode.ScalePrefabs:
+                if (isLocalPlayer)
+                    viveManipulator.DeactivateRay();
+                break;
+
+        }
+
+        InteractionMode oldMode = ViveBridge.InteractionMode;
+
+        // this actually changes the mode
+        if (isLocalPlayer)
+        {
+            if (ViveBridge.ChangeMode)
+                ViveBridge.InteractionMode = viveManipulator.ChangeMode(ViveBridge.InteractionMode);
+            else
+            {
+                ViveBridge.ChangeMode = true;
+                return;
+            }
+        }
+
+        // this is executed *after* leaving the previous mode
+        switch (oldMode)
+        {
+            case InteractionMode.SpawnPrimitives:
+                if (isLocalPlayer)
+                {
+                    viveManipulator.DeactivateTempPrimitive();
+                }
                 break;
         }
 
-        // this actually changes the mode
-        viveManipulator.ChangeMode();
-        viveManipulator.ChangeColor();
-
-        // this gets execute *after* changing the mode
-        switch (viveManipulator.InteractionMode)
+        // this gets executed *after* entering the new mode
+        switch (ViveBridge.InteractionMode)
         {
             case InteractionMode.SpawnPrimitives:
                 if (isLocalPlayer)
                 {
-                    viveManipulator.DeactivateRay();
                     viveManipulator.ActivateTempPrimitive(ViveManipulator.MinimumPrimitiveDistance);
                 }
                 break;
 
-
-                case InteractionMode.SpawnObjects:
+                case InteractionMode.ScalePrefabs:
+                case InteractionMode.Manipulation:
                 if (isLocalPlayer)
                 {
+                    viveManipulator.ActivateRay();
+                }
+                break;
+
+
+            case InteractionMode.SpawnObjects:
+                if (isLocalPlayer)
+                {
+                    viveManipulator.ActivateRay();
                     radialMenu.gameObject.SetActive(true);
                 }
-                //else
-                //    RpcActivateRadialMenu();
                 break;
         }
+
+        viveManipulator.ChangeColor(ViveBridge.InteractionMode);
+
+    }
+
+    [ClientRpc]
+    private void RpcCheckManipulation()
+    {
+        if (!ViveBridge.IsManipulating)
+            viveManipulator.ReleaseObject();
     }
 
     [ClientRpc]
@@ -149,63 +265,166 @@ public partial class VivePawn : NetworkBehaviour
     {
         if (!isLocalPlayer)
             return;
-        viveManipulator.CaptureCollided();
-        switch (viveManipulator.InteractionMode)
+        viveManipulator.CaptureCollided(ViveBridge.InteractionMode);
+        switch (ViveBridge.InteractionMode)
         {
             case InteractionMode.ScalePrefabs:
-                viveManipulator.DeactivateRay();
+                viveManipulator.DeactivateRay(); 
                 break;
         }
     }
 
     private void ViveBridge_TriggerClicked(object sender, ClickedEventArgs e)
     {
-        //Debug.Log("ray hit:" + viveManipulator.RayHitPoint());
-        switch (viveManipulator.InteractionMode)
+        switch (ViveBridge.InteractionMode)
         {
             case InteractionMode.Manipulation:
-                RpcDragObject();
+                if (isLocalPlayer)
+                {
+                    viveManipulator.DragObject(ViveBridge.InteractionMode);
+                    DisplayBox(ViveBridge.CollidedName, true);
+                }
+                else
+                    RpcDragObject();
                 break;
 
             case InteractionMode.ScalePrefabs:
                 RpcCapture();
+                DisplayBox(ViveBridge.CollidedName, true);
                 break;
         }
     }
 
+    void DisplayBox(string target, bool active)
+    {
+        if (string.IsNullOrEmpty(target))
+            return;
+        Debug.Log(target);
+        var gameObject = GameObject.Find(target);
+        if (gameObject== null || gameObject.transform.parent == null)
+            return;
+        gameObject = gameObject.transform.parent.gameObject;
+        if (!gameObject.CompareTag(ViveManipulable.Manipulable))
+            return;
+
+        var box = boxObject[gameObject.name];
+        box.SetActive(active);
+        RpcSetActive(box, active);
+    }
+
     private void ViveBridge_TriggerUnclicked(object sender, ClickedEventArgs e)
     {
-        switch (viveManipulator.InteractionMode)
+        switch (ViveBridge.InteractionMode)
         {
             case InteractionMode.ScalePrefabs:
             case InteractionMode.Manipulation:
-                RpcReleaseObject();
-                break;
-
-            case InteractionMode.SpawnPrimitives:
                 if (isLocalPlayer)
                 {
-                    var primitive = SpawnFactory.Spawn("Prefabs/Scene1/SphereMarker",
-                        CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position, transform.forward),
-                        transform.rotation);
-                    primitiveManager.RegisterPrimitive(primitive);
-                    primitiveManager.RegisterPosition(primitive.transform.position);
+                    ReleaseObject();
+                    DisplayBox(ViveBridge.CollidedName, false);
                 }
                 else
                 {
-                    RpcAddPosition(CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position,
-                        transform.forward));
+                    RpcReleaseObject();
                 }
+                break;
+
+            case InteractionMode.SpawnPrimitives:
+                Vector3 primitivePosition = CalculatePrimitivePosition(ViveManipulator.MinimumPrimitiveDistance, transform.position, transform.forward);
+                primitivePosition.y -= ViveManipulator.PrimitiveScale;
+
+                if (isLocalPlayer)
+                {
+                    if (ViveBridge.IndicatorCount == 8)
+                        return;
+                    var primitive = SpawnFactory.Spawn("Prefabs/Scene1/SphereMarker", primitivePosition, transform.rotation, Vector3.zero);
+                    primitiveManager.RegisterPrimitive(primitive);
+                    RpcRegisterPosition(primitivePosition);
+                    RpcIncreasePointsText();
+                }
+                else
+                    RpcRegisterPosition(primitivePosition);
                 break;
 
             case InteractionMode.SpawnObjects:
                 if (isLocalPlayer)
                 {
-                    radialMenu.PlaceObject(viveManipulator.GetHitPoint());
+                    PlaceObject();
                 }
                 break;
         }
     }
+
+    void PlaceObject()
+    {
+        if (string.IsNullOrEmpty(ViveBridge.CollidedHighlighter))
+            return;
+        var primitive = GameObject.Find(ViveBridge.CollidedHighlighter);
+        var cTransform = primitive.transform;
+        var box = cTransform.gameObject;
+        box.SetActive(false);
+        Vector3 newScale;
+        Quaternion newRotation;
+        var newObject = radialMenu.PlaceObject(cTransform.position, cTransform.rotation, cTransform.localScale, out newScale, out newRotation);
+        newObject.name = string.Format("Object{0:D2}", boxObject.Count + 1);
+
+        Debug.Log("Scaling: " + primitive.name + " Scale:" + newScale);
+        RpcSetScale(newObject, newScale);
+        RpcSetRotation(newObject, newRotation);
+        RpcSetActive(box, false);
+        boxObject.Add(newObject.transform.name, box);
+        RpcSetName(newObject, newObject.transform.name);
+        RpcSetName(box, box.transform.name);
+    }
+
+    [ClientRpc]
+    private void RpcSetName(GameObject target, string newName)
+    {
+        Debug.Log(string.Format("Renaming [{0}] to [{1}]", target.name, newName));
+        target.name = newName;
+
+        string count = newName.Substring(newName.Length - 2, 2);
+        foreach (Transform child in target.transform)
+        {
+            child.gameObject.name += count;
+        }
+    }
+
+    [ClientRpc]
+    private void RpcSetNameOld(string oldName, string newName)
+    {
+        Debug.Log(string.Format("Renaming [{0}] to [{1}]", oldName, newName));
+        var old = GameObject.Find(oldName);
+        old.name = newName;
+    }
+
+    [ClientRpc]
+    private void RpcRegisterPosition(Vector3 position)
+    {
+        primitiveManager.RegisterPosition(position);
+    }
+
+    [ClientRpc]
+    private void RpcIncreasePointsText()
+    {
+        ViveBridge.IndicatorCount++;
+        UpdateTextMesh();
+    }
+
+    [ClientRpc]
+    private void RpcClearPointsText()
+    {
+        ViveBridge.IndicatorCount=0;
+        UpdateTextMesh();
+    }
+
+    [ClientRpc]
+    private void RpcDecreasePointsText()
+    {
+        ViveBridge.IndicatorCount--;
+        UpdateTextMesh();
+    }
+
 
     public static Vector3 CalculatePrimitivePosition(float distance, Vector3 position, Vector3 forward)
     {
@@ -235,57 +454,89 @@ public partial class VivePawn : NetworkBehaviour
         rayMesh.transform.rotation = transform.rotation;
 
         CheckHits();
-
-        switch (viveManipulator.InteractionMode)
+        
+        switch (ViveBridge.InteractionMode)
         {
             case InteractionMode.ScalePrefabs:
-                viveManipulator.ScaleObject();
+                if (viveManipulator.IsScaling)
+                {
+                    viveManipulator.ScaleObject();
+                    DisplayBox(viveManipulator.ManipulatedObject.name, true);
+                }
+                else if (!string.IsNullOrEmpty(ViveBridge.CollidedName) && !string.Equals(ViveBridge.CollidedName, lastCollided))
+                {
+                    var collided = GameObject.Find(ViveBridge.CollidedName);
+
+                    if (collided.CompareTag(ViveManipulable.Manipulable))
+                    {
+                        DisplayBox(ViveBridge.CollidedName, true);
+                        lastCollided = ViveBridge.CollidedName;
+                    }
+                }
                 break;
 
             case InteractionMode.SpawnObjects:
                 int index = radialMenu.FindIndex(ViveBridge.Touchpad);
                 radialMenu.Highlight(index);
                 break;
+
+                case InteractionMode.Manipulation:
+                if (!string.IsNullOrEmpty(ViveBridge.CollidedName) && !string.Equals(ViveBridge.CollidedName, lastCollided))
+                {
+                    var collided = GameObject.Find(ViveBridge.CollidedName);
+                    
+                    if (collided.CompareTag(ViveManipulable.Manipulable))
+                    {
+                        DisplayBox(ViveBridge.CollidedName, true);
+                        lastCollided = ViveBridge.CollidedName;
+                    }
+                }
+                break;
+        }
+
+        if (!string.IsNullOrEmpty(lastCollided) && !string.Equals(ViveBridge.CollidedName, lastCollided))
+        {
+            DisplayBox(lastCollided,false);
+            lastCollided = ViveBridge.CollidedName;
         }
     }
-
 
     void CheckHits()
     {
         if (!isLocalPlayer)
             return;
 
-        viveManipulator.CheckHits(ViveBridge.Position, ViveBridge.Forward, isServer);
+        viveManipulator.CheckHits(ViveBridge.InteractionMode, isServer);
     }
 
     [ClientRpc]
     void RpcDragObject()
     {
-        if (!isLocalPlayer)
-            return;
-
-        viveManipulator.DragObject();
+        viveManipulator.DragObject(ViveBridge.InteractionMode);
     }
 
     [ClientRpc]
     void RpcReleaseObject()
     {
-        if (!isLocalPlayer)
-            return;
-        viveManipulator.ReleaseObject();
-
-        switch (viveManipulator.InteractionMode)
-        {
-            case InteractionMode.ScalePrefabs:
-                viveManipulator.ActivateRay();
-                break;
-        }
+        ReleaseObject();
     }
 
     [ClientRpc]
     private void RpcChangeMode()
     {
         ChangeMode();
+    }
+
+    void ReleaseObject()
+    {
+        viveManipulator.ReleaseObject();
+
+        switch (ViveBridge.InteractionMode)
+        {
+            case InteractionMode.ScalePrefabs:
+                viveManipulator.ActivateRay();
+                break;
+        }
     }
 
     public override void OnStartLocalPlayer()

@@ -44,40 +44,43 @@ namespace Assets.New_Scripts
             indPositions.Add(position);
         }
 
-        public void SpawnBox()
+        public GameObject SpawnBox()
         {
-            Debug.Log("Number of points:" + IndicatorCount);
-            GameObject newBox = BoxGenerator.CreateBox(IndicatorPositions,
-                (Material)Resources.Load("Materials/ProceduralBoxMaterial"));
+            GameObject newBox = BoxGenerator.CreateBox(IndicatorPositions);
+            newBox.name = string.Format("ProceduralBox{0:D2}", proceduralBoxes.Count + 1);
 
-            if (IndicatorCount == 4)
-            {
-                newBox.tag = "FourPointPrimitive";
-            }
-            else if (IndicatorCount == 8)
-            {
-                newBox.tag = "EightPointPrimitive";
-            }
-
-            newBox.AddComponent<PersistentObjectData>();
-            newBox.AddComponent<NetworkIdentity>();
+            //if (IndicatorCount == 4)
+            //{
+            //    newBox.tag = "FourPointPrimitive";
+            //}
+            //else if (IndicatorCount == 8)
+            //{
+            //    newBox.tag = "EightPointPrimitive";
+            //}
 
             proceduralBoxes.Add(newBox);
-
             UnSpawn();
-
-            // Update number of points
-            var cTextMesh = GameObject.Find("Point Selection Info").GetComponentInChildren<TextMesh>();
-            cTextMesh.text = "0 points";
+            return newBox;
         }
 
         public void RemoveLastBox()
         {
-            var lastBox = proceduralBoxes.Last();
-            if (lastBox != null)
+            if (indicatorSpawnPool.Count > 0)
             {
-                proceduralBoxes.Remove(proceduralBoxes.Last());
-                GameObject.Destroy(lastBox);
+                for (var i = 0; i < indicatorSpawnPool.Count; i++)
+                {
+                    NetworkServer.Destroy(indicatorSpawnPool[i]);
+                }
+                ClearIndicatorArrays();
+            }
+            else if (proceduralBoxes.Count>0)
+            {
+                var lastBox = proceduralBoxes.Last();
+                if (lastBox != null)
+                {
+                    proceduralBoxes.Remove(proceduralBoxes.Last());
+                    GameObject.Destroy(lastBox);
+                }
             }
         }
 

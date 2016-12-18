@@ -17,13 +17,15 @@ public class ViveNetRadialMenu : MonoBehaviour
 
     private SteamVR_TrackedController viveLeftController;
     private GameObject currentSelection;
+    private GameObject lastObject;
     private int pagePrefabIndex;
 
     // Use this for initialization
     void Start()
     {
         //PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/VictChairDining"));
-        PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/Chair_Smoking_LOD"));
+        //PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/Chair_Smoking"));
+        PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/OfficeDesk"));
         PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/OfficeDesk"));
         PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/SmallEndtable"));
         PrefabList.Add(Resources.Load<GameObject>("Prefabs/Scene2/VictCreamPitcher"));
@@ -34,6 +36,7 @@ public class ViveNetRadialMenu : MonoBehaviour
         InitPrefabs();
         pagePrefabIndex = -3;
         CyclePage();
+        Highlight(0);
         gameObject.SetActive(false);
     }
 
@@ -51,16 +54,23 @@ public class ViveNetRadialMenu : MonoBehaviour
         viveLeftController.PadUnclicked += ViveLeftController_PadUnclicked;
     }
 
-    public void PlaceObject(Vector3 position)
+    public GameObject PlaceObject(Vector3 position, Quaternion rotation, Vector3 scale, out Vector3 newScale, out Quaternion newRotation)
     {
+        newScale = new Vector3(1,1,1);
+        newRotation = Quaternion.identity;
+
         if (currentSelection == null || position == Vector3.zero)
-            return;
-        position += currentSelection.transform.position;
+            return null;
+        position -= new Vector3(0, scale.y / 2, 0);
         var newObject = (GameObject)GameObject.Instantiate(currentSelection, position, currentSelection.transform.localRotation);
-        var scale = newObject.GetComponent<ScaleData>().WorldScale;
-        newObject.transform.localScale = scale;
-        
+        newObject.transform.rotation = newRotation=rotation;
         NetworkServer.Spawn(newObject);
+
+        newObject.transform.localScale = newScale = Vector3.Scale(newObject.transform.localScale, scale);
+        
+        
+        lastObject = newObject;
+        return newObject;
     }
 
     static Vector3 RadialCoordinates(int index, int count, float r, float d)
@@ -100,31 +110,41 @@ public class ViveNetRadialMenu : MonoBehaviour
         if (!IsIndexValid(itemIndex))
             return;
 
-        var light = transform.FindChild("Spotlight");
-
         itemIndex += pagePrefabIndex;
-        light.localPosition = InstanceList[itemIndex].transform.localPosition + new Vector3(0, 0, -0.5f);
+        foreach (var instance in InstanceList)
+        {
+            instance.layer = 0;
+            for (int i = 0; i < instance.transform.childCount; i++)
+            {
+                instance.transform.GetChild(i).gameObject.layer = 0;
+            }
+        }
+        int layer = LayerMask.NameToLayer("RadialMenu");
+
+        var prop = InstanceList[itemIndex];
+        prop.layer = layer;
+        for (int i = 0; i < InstanceList[itemIndex].transform.childCount; i++)
+        {
+            prop.transform.GetChild(i).gameObject.layer = layer;
+        }
+            
+        //light.localPosition = InstanceList[itemIndex].transform.localPosition + new Vector3(0, 0, -0.5f);
         currentSelection = PrefabList[itemIndex];
     }
 
     void InitPrefabs()
     {
         int itemIndex = 0;
+        int counter=0;
         foreach (var prefab in PrefabList)
         {
             var prop = GameObject.Instantiate(prefab);
             Vector3 scale = prop.GetComponent<ScaleData>().MenuScale;
             InstanceList.Add(prop);
-            prop.layer = 8;
-            for (int i=0; i<prop.transform.childCount; i++)
-            {
-                var child = prop.transform.GetChild(i).gameObject;
-                child.layer = 8;
-            }
+            prop.name = string.Format("Item{0:D2}", counter++);
             prop.transform.position = Vector3.zero;
             prop.transform.parent = transform;
             prop.transform.localScale = scale;
-            //prop.transform.localRotation = Quaternion.identity;
             prop.transform.localPosition = RadialCoordinates(itemIndex, PrefabList.Count, Radius, Distance);
             itemIndex = (itemIndex + 1)%PrefabsPerPage;
         }
@@ -139,6 +159,15 @@ public class ViveNetRadialMenu : MonoBehaviour
         for (int i=pagePrefabIndex; i < pagePrefabIndex+PrefabsPerPage; i++)
         {
             InstanceList[i].SetActive(true);
+        }
+    }
+
+    public void RemoveLastObject()
+    {
+        if (lastObject != null)
+        {
+            GameObject.Destroy(lastObject);
+            lastObject = null;
         }
     }
 }
