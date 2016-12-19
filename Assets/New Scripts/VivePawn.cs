@@ -35,7 +35,7 @@ public partial class VivePawn : NetworkBehaviour
         ViveBridge.PadUnclicked += ViveBridge_PadUnclicked;
         ViveBridge.Ungripped += ViveBridge_Ungripped;
         ViveBridge.MenuUnclicked += ViveBridge_MenuUnclicked;
-
+        radialMenu.gameObject.SetActive(false);
         primitiveManager = new PrimitiveManager();
     }
 
@@ -77,7 +77,7 @@ public partial class VivePawn : NetworkBehaviour
                 }
                 break;
 
-                case InteractionMode.SpawnObjects:
+            case InteractionMode.SpawnObjects:
                 if (isLocalPlayer)
                 {
                     string last = boxObject.Keys.Last();
@@ -86,9 +86,26 @@ public partial class VivePawn : NetworkBehaviour
                     radialMenu.RemoveLastObject();
                     boxObject.Remove(last);
                 }
+                break;
 
+            case InteractionMode.ScalePrefabs:
+                if (!string.IsNullOrEmpty(ViveBridge.CollidedName))
+                {
+                    var collided = GameObject.Find(ViveBridge.CollidedName);
+                    if (collided.transform.parent != null)
+                        collided = collided.transform.parent.gameObject;
+
+                    collided.transform.localScale = collided.GetComponent<ScaleData>().WorldScale; 
+                    RpcRestoreScale(collided);
+                }
                 break;
         }
+    }
+
+    [ClientRpc]
+    private void RpcRestoreScale(GameObject target)
+    {
+        target.transform.localScale = target.GetComponent<ScaleData>().WorldScale;
     }
 
     private void ViveBridge_Ungripped(object sender, ClickedEventArgs e)
@@ -144,21 +161,22 @@ public partial class VivePawn : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void RpcSetScale(GameObject primitive, Vector3 scale)
+    private void RpcSetScale(GameObject target, Vector3 scale)
     {
-        primitive.transform.localScale = scale;
+        target.transform.localScale = scale;
+        target.GetComponent<ScaleData>().WorldScale = scale;
     }
 
     [ClientRpc]
-    private void RpcSetRotation(GameObject primitive, Quaternion rotation)
+    private void RpcSetRotation(GameObject target, Quaternion rotation)
     {
-        primitive.transform.localRotation = rotation;
+        target.transform.localRotation = rotation;
     }
 
     [ClientRpc]
-    private void RpcSetActive(GameObject primitive, bool active)
+    private void RpcSetActive(GameObject target, bool active)
     {
-        primitive.SetActive(active);
+        target.SetActive(active);
     }
 
     private void ChangeMode()
@@ -369,6 +387,7 @@ public partial class VivePawn : NetworkBehaviour
         newObject.name = string.Format("Object{0:D2}", boxObject.Count + 1);
 
         Debug.Log("Scaling: " + primitive.name + " Scale:" + newScale);
+        newObject.GetComponent<ScaleData>().WorldScale = newScale;
         RpcSetScale(newObject, newScale);
         RpcSetRotation(newObject, newRotation);
         RpcSetActive(box, false);
@@ -494,7 +513,7 @@ public partial class VivePawn : NetworkBehaviour
                 break;
         }
 
-        if (!string.IsNullOrEmpty(lastCollided) && !string.Equals(ViveBridge.CollidedName, lastCollided))
+        if (!viveManipulator.IsScaling && !string.IsNullOrEmpty(lastCollided) && !string.Equals(ViveBridge.CollidedName, lastCollided))
         {
             DisplayBox(lastCollided,false);
             lastCollided = ViveBridge.CollidedName;

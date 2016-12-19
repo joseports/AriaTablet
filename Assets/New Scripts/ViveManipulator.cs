@@ -9,6 +9,7 @@ namespace Assets.New_Scripts
         public const float MinimumPrimitiveDistance = 0.05f;
         public const float HmdMinimumPrimitiveDistance = 0.05f;
         public const float SmoothStep = 5f;
+        private const float scaleFactor = 5f;
         internal const string rayMesh = "ray";
         internal const string raySphereMesh = "raySphere";
         private readonly GameObject vivePawn;
@@ -17,10 +18,8 @@ namespace Assets.New_Scripts
         // for scaling JFG
         private int quadrantWorld;
         private int quadrantObject;
-        private float scaleFactor = 10f;
+
         private bool rotated;
-        private float angleX=180;
-        private float angleY=90;
         private Vector3 initialPosition;
         private Quaternion initialRotation = Quaternion.identity;
         private Quaternion attachedRotation = Quaternion.identity;
@@ -184,7 +183,7 @@ namespace Assets.New_Scripts
             foreach (var meshRender in vivePawn.GetComponentsInChildren<MeshRenderer>())
             {
                 if (!string.Equals(meshRender.gameObject.tag, "InteractionIndicator"))
-                    return;
+                    continue;
                 meshRender.material.color = newColor;
             }
         }
@@ -405,7 +404,6 @@ namespace Assets.New_Scripts
             {
                 vivePawn.transform.Find("Highlighter").gameObject.GetComponent<Light>().enabled = false;
             }
-
 
             var newPosition = new Vector3(0, 0, (viveBridge.HitPoint - viveBridge.Position).magnitude);
             var sphere = vivePawn.transform.Find(raySphereMesh);

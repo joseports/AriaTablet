@@ -11,7 +11,6 @@ public class ViveBridge : NetworkBehaviour
 
 
     public const float SmoothStep = 5f;
-    public ViveController ViveRightController;
     private SteamVR_TrackedController controller;
     private SteamVR_Controller.Device device;
 
@@ -68,7 +67,7 @@ public class ViveBridge : NetworkBehaviour
         }
     }
 
-    void CheckHits()
+    internal void CheckHits()
     {
         RaycastHit hitInfo;
 
@@ -115,6 +114,12 @@ public class ViveBridge : NetworkBehaviour
         controller.Gripped += Controller_Gripped;
         controller.Ungripped += Controller_OnUngripped;
         controller.MenuButtonUnclicked += Controller_MenuButtonUnclicked;
+        device = SteamVR_Controller.Input((int)controller.controllerIndex);
+        ViveBridge_Inited(this, EventArgs.Empty);
+    }
+
+    public void SetupLocal(SteamVR_TrackedController controller)
+    {
         device = SteamVR_Controller.Input((int)controller.controllerIndex);
         ViveBridge_Inited(this, EventArgs.Empty);
     }

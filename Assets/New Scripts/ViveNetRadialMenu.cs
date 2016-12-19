@@ -37,7 +37,6 @@ public class ViveNetRadialMenu : MonoBehaviour
         pagePrefabIndex = -3;
         CyclePage();
         Highlight(0);
-        gameObject.SetActive(false);
     }
 
     private void ViveLeftController_PadUnclicked(object sender, ClickedEventArgs e)
@@ -54,7 +53,7 @@ public class ViveNetRadialMenu : MonoBehaviour
         viveLeftController.PadUnclicked += ViveLeftController_PadUnclicked;
     }
 
-    public GameObject PlaceObject(Vector3 position, Quaternion rotation, Vector3 scale, out Vector3 newScale, out Quaternion newRotation)
+    public GameObject PlaceObject(Vector3 position, Quaternion rotation, Vector3 scale, out Vector3 newScale, out Quaternion newRotation, bool network = true)
     {
         newScale = new Vector3(1,1,1);
         newRotation = Quaternion.identity;
@@ -64,7 +63,8 @@ public class ViveNetRadialMenu : MonoBehaviour
         position -= new Vector3(0, scale.y / 2, 0);
         var newObject = (GameObject)GameObject.Instantiate(currentSelection, position, currentSelection.transform.localRotation);
         newObject.transform.rotation = newRotation=rotation;
-        NetworkServer.Spawn(newObject);
+        if (network)
+            NetworkServer.Spawn(newObject);
 
         newObject.transform.localScale = newScale = Vector3.Scale(newObject.transform.localScale, scale);
         

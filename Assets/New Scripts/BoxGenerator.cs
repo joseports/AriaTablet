@@ -28,7 +28,7 @@ namespace Assets.New_Scripts
             return average/pArray.Length;
         }
 
-        GameObject Calculate2()
+        GameObject Calculate2(bool network = true)
         {
             List<Vector3> plane1 = points.Take(4).ToList();
             List<Vector3> plane2 = new List<Vector3>();
@@ -91,7 +91,7 @@ namespace Assets.New_Scripts
             var rotation = Quaternion.AngleAxis(angle, Vector3.up);
             var position = new Vector3(center.x, points.Count == 4 ? averageY1/2 : center.y, center.z);
 
-            var box = SpawnFactory.Spawn("Prefabs/Scene1/Primitive", position, rotation, scale);
+            var box = SpawnFactory.Spawn("Prefabs/Scene1/Primitive", position, rotation, scale, network);
             return box;
         }
 
@@ -314,11 +314,11 @@ namespace Assets.New_Scripts
             return primGO;
         }
 
-        public static GameObject CreateBox(IEnumerable<Vector3> inPoints)
+        public static GameObject CreateBox(IEnumerable<Vector3> inPoints, bool network = true)
         {
             var boxGenerator = new BoxGenerator(inPoints);
             
-            return boxGenerator.Calculate2();
+            return boxGenerator.Calculate2(network);
         }
 
         int Less(Vector3 a, Vector3 b)

@@ -13,6 +13,8 @@ namespace Assets.New_Scripts
         private readonly List<Vector3> indPositions;
         private readonly List<GameObject> indicatorSpawnPool;
         private readonly List<GameObject> proceduralBoxes;
+        private readonly List<GameObject> proceduralBoxes4;
+        private readonly List<GameObject> proceduralBoxes8;
         //public static NetworkHash128 passetId { get; set; }
         private string assetStrng = "0176acd452adc180";
         private int m_ObjectPoolSize = 8;
@@ -22,6 +24,8 @@ namespace Assets.New_Scripts
         public PrimitiveManager()
         {
             indicatorSpawnPool = new List<GameObject>();
+            proceduralBoxes4 = new List<GameObject>();
+            proceduralBoxes8 = new List<GameObject>();
             proceduralBoxes = new List<GameObject>();
             indPositions = new List<Vector3>();
             //passetId = NetworkHash128.Parse(assetStrng);
@@ -44,21 +48,22 @@ namespace Assets.New_Scripts
             indPositions.Add(position);
         }
 
-        public GameObject SpawnBox()
+        public GameObject SpawnBox(bool network=true)
         {
-            GameObject newBox = BoxGenerator.CreateBox(IndicatorPositions);
-            newBox.name = string.Format("ProceduralBox{0:D2}", proceduralBoxes.Count + 1);
+            GameObject newBox = BoxGenerator.CreateBox(IndicatorPositions, network);
+            newBox.name = string.Format("ProceduralBox{0:D2}", proceduralBoxes4.Count + 1);
 
-            //if (IndicatorCount == 4)
-            //{
-            //    newBox.tag = "FourPointPrimitive";
-            //}
-            //else if (IndicatorCount == 8)
-            //{
-            //    newBox.tag = "EightPointPrimitive";
-            //}
+            if (IndicatorCount == 4)
+            {
+                proceduralBoxes4.Add(newBox);
+            }
+            else if (IndicatorCount == 8)
+            {
+                proceduralBoxes8.Add(newBox);
+            }
 
             proceduralBoxes.Add(newBox);
+            
             UnSpawn();
             return newBox;
         }
@@ -78,7 +83,11 @@ namespace Assets.New_Scripts
                 var lastBox = proceduralBoxes.Last();
                 if (lastBox != null)
                 {
-                    proceduralBoxes.Remove(proceduralBoxes.Last());
+                    proceduralBoxes.Remove(lastBox);
+                    if (proceduralBoxes4.Contains(lastBox))
+                        proceduralBoxes4.Remove(lastBox);
+                    else
+                        proceduralBoxes8.Remove(lastBox);
                     GameObject.Destroy(lastBox);
                 }
             }
